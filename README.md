@@ -1,7 +1,7 @@
 # COSMO v1.0
 
-This script allows detection of enriched composite motifs
-in genomic sequence data.
+This script allows detection of enriched composite motifs in genomic sequence
+data.
 
 ## PREREQUISITES:
 
@@ -9,9 +9,9 @@ Python 2.7, with modules:
 
 *	NumPy
 *	SciPy
-*	[MOODS v1.0.2.1](https://www.cs.helsinki.fi/group/pssmfind/)
+*	[MOODS v1.0.2.1][moods]
 * JASPAR formatted motifs
-* [BEDTOOLS derived FastA DNA sequence file](http://bedtools.readthedocs.io/en/latest/)
+* [BEDTOOLS][] derived FastA DNA sequence file
 
 ## INSTALLATION:
 
@@ -30,27 +30,31 @@ Unpack tarball into a local directory, then run `example.sh`.
 
 ## USAGE:
 
-Foreground scan
+### Foreground scan
 
     ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10
 
-Background scans
+### Background scans
 
     ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10 -s -N 1
     ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10 -s -N 2
     ...
     ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10 -s -N 100
 
-Coordinates scan
+### Coordinates scan
 
     ./cosmo.py -fa ./h3k27ac.fa -t 0.6 -d 10 -C
 
-Statistics calculation:
+### Statistics calculation
 
     ./cosmostats_v1.py -N 100
 
 ## OUTPUT:
 
-COSMO writes counts for stereopairs to the local directory in the file `cosmo.counts.tab`.
-Background scans (with parameters `-s` and `-N <x>`) are placed into sequential files named "cosmo.counts.tab.<x>").
-Coordinates are saved into a BED-formatted file `cosmo.coords.bed`
+COSMO writes counts for stereopairs to the local directory in the file
+`cosmo.counts.tab`.  Background scans (with parameters `-s` and `-N <x>`) are
+placed into sequential files named `cosmo.counts.tab.<x>`).  Coordinates are
+saved into a BED-formatted file `cosmo.coords.bed`
+
+[moods]: https://www.cs.helsinki.fi/group/pssmfind/
+[bedtools]: http://bedtools.readthedocs.io/en/latest/
