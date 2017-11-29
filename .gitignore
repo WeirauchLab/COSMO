@@ -1,0 +1,7 @@
+.*sw?
+*~
+
+# intermediate data files
+*.fa
+*.tab*
+*.bed
