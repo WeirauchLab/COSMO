@@ -1,4 +1,5 @@
-#!/usr/local/python/2.7.5/bin/python
+#!/usr/bin/env python
+#/usr/local/python/2.7.5/bin/python
 import math
 import numpy as np
 from scipy.stats.distributions import norm
