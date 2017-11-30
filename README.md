@@ -3,7 +3,7 @@
 This script allows detection of enriched composite motifs in genomic sequence
 data.
 
-## PREREQUISITES:
+## PREREQUISITES
 
 Python 2.7, with modules:
 
@@ -13,22 +13,53 @@ Python 2.7, with modules:
 * JASPAR formatted motifs
 * [BEDTOOLS][] derived FastA DNA sequence file
 
-## INSTALLATION:
+## INSTALLATION
 
-Unpack tarball into a local directory, then run `example.sh`.
+1. Download the [latest release tarball][targz] ([.zip][zip]) from GitLab,
+   then unpack it into a local directory.
+2. Install NumPy and SciPy dependencies
 
-## PARAMETERS:
+    **...using a package manager**:
 
-    -fa	PATH to FastA sequence file
-    -t	Log-odds score threshold (S/Smax) (default is 0.6)
-    -P	(optional) Pseudocount for MOODS to use (default is "1")
-    -p	PATH to JASPAR-format PWMs (default is "./jpwm/")
-    -d	Maximum allowed distance between motifs (default is "10")
-    -s	Boolean flag to dinucleotide shuffle the input sequence
-    -N	Background run number
-    -C	Boolean flag to save coordinates rather than counts
+        # Debian-like OSes (incl. Ubuntu)
+        sudo apt-get install python-numpy python-scipy
 
-## USAGE:
+        # Fedora/RHEL/CentOS
+        sudo yum install python27-numpy python27-scipy
+
+        # OS X / macOS using Homebrew (https://brew.sh)
+        brew install numpy scipy
+
+        # MacPorts
+        sudo port install py27-numpy py27-scipy
+
+        # Windows
+        # FIXME - maybe conda?
+
+    **...using [pip][] in a virtualenv**:
+
+        cd /path/to/cosmo
+        virtualenv venv --python=python2
+        source venv/bin/activate
+        pip install -r requirements.txt
+
+3. Finally, run `./example.sh` within the "cosmo" directory.
+
+
+## PARAMETERS
+
+| Option     | Description
+|------------|----------------------------------------------------------
+| `-fa PATH` | to FastA sequence file
+| `-t`       | Log-odds score threshold (S/Smax) (default is `0.6`)
+| `-P`       | (optional) Pseudocount for MOODS to use (default is `1`)
+| `-p`       | PATH to JASPAR-format PWMs (default is `./jpwm/`)
+| `-d`       | Maximum allowed distance between motifs (default is `10`)
+| `-s`       | Boolean flag to dinucleotide shuffle the input sequence
+| `-N`       | Background run number
+| `-C`       | Boolean flag to save coordinates rather than counts
+
+## USAGE
 
 ### Foreground scan
 
@@ -49,12 +80,26 @@ Unpack tarball into a local directory, then run `example.sh`.
 
     ./cosmostats_v1.py -N 100
 
-## OUTPUT:
+## OUTPUT
 
 COSMO writes counts for stereopairs to the local directory in the file
 `cosmo.counts.tab`.  Background scans (with parameters `-s` and `-N <x>`) are
 placed into sequential files named `cosmo.counts.tab.<x>`).  Coordinates are
 saved into a BED-formatted file `cosmo.coords.bed`
 
+## CONTRIBUTORS
+
+| Name            | Email                            | Contribution    |
+|-----------------|----------------------------------|-----------------|
+| Jeremy Riddell  | [riddeljr -at- mail.uc.edu][jr]  | Primary author  |
+
+## LICENSE
+
+`FIXME`
+
 [moods]: https://www.cs.helsinki.fi/group/pssmfind/
 [bedtools]: http://bedtools.readthedocs.io/en/latest/
+[targz]: https://tfwebdev.research.cchmc.org/gitlab/cosmo/cosmo/repository/master/archive.tar.gz
+[zip]: https://tfwebdev.research.cchmc.org/gitlab/cosmo/cosmo/repository/master/archive.zip
+[pip]: https://pip.pypa.io/en/stable/installing/
+[jr]: mailto:riddeljr%20-at-%20mail.uc.edu
