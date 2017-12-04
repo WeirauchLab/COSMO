@@ -17,9 +17,14 @@ Python 2.7, with modules:
 
 1. Download the [latest release tarball][targz] ([.zip][zip]) from GitLab,
    then unpack it into a local directory.
-2. Install NumPy and SciPy dependencies
+2. If necessary, install NumPy and SciPy dependencies.
 
-    **...using a package manager**:
+   **NB:** In most cluster environments, this step should not be necessary (if
+   you want to verify, try running `python` at the console, then `import scipy`
+   followed by `import numpy`&mdash;or just run the `example.sh` script and see
+   what happens).
+
+    **Using a package manager**:
 
         # Debian-like OSes (incl. Ubuntu)
         sudo apt-get install python-numpy python-scipy
@@ -36,7 +41,7 @@ Python 2.7, with modules:
         # Windows
         # FIXME - maybe conda?
 
-    **...using [pip][] in a virtualenv**:
+    **Using [pip][] in a virtualenv**:
 
         cd /path/to/cosmo
         virtualenv venv --python=python2

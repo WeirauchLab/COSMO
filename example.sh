@@ -14,7 +14,9 @@ BACKGROUND_SCANS=100
 DISTANCE=10
 THRESHOLD=0.6
 
-test -f ./example.fa || gunzip ./example.fa.gz
+test -f ./example.fa || \
+    # keep the original .fa.gz (or else Git will complain)
+    gzip -dc < example.fa.gz > example.fa
 
 ./cosmo_v1.py -fa ./example.fa -t $THRESHOLD -d $DISTANCE -p ./jpwm/ &
 
