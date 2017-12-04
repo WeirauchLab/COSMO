@@ -20,9 +20,9 @@ Python 2.7, with modules:
 2. If necessary, install NumPy and SciPy dependencies.
 
     **NB**: In most cluster environments, this step should not be necessary (if
-    you want to verify, try running `python` at the console, then `import
-    scipy` followed by `import numpy`&mdash;or just run the `example.sh` script
-    and see what happens).
+    you want to verify, try running `python` at the console, then `import scipy`
+    followed by `import numpy`&mdash;or just run the `example.sh` script and
+    see what happens).
 
     **Using a package manager**:
 
