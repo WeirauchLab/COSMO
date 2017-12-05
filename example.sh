@@ -144,7 +144,7 @@ else
     elapsed=0
 
     while (( 1 )); do
-        clear
+        tty -s && clear || true
         echo -ne "${BOLD}Checking every 5s for completion of "
         echo -ne "PIDs ${BLUE}${pids[*]}${WHITE}...${RESET} "
         echo -e "(${YELLOW}CTRL+C to quit${RESET})\n"
@@ -157,6 +157,7 @@ else
                              <(quietly tail -$LOGTAIL "$LOGDIR/bgtask2.log") \
                              <(quietly tail -$LOGTAIL "$LOGDIR/gbtask3.log") || true
 
+        echo
         sleep 5
         elapsed=$(( elapsed+=5 ))
 
@@ -168,8 +169,6 @@ else
         break
     done
 fi # if REUSE was set and cosmo.coords.bed and cosmo.counts.tab exist
-
-echo
 
 # brace expansion happens before variable interpolation (so 'for i in {1..$var}'
 # won't work), need an arithmetic 'for' loop; see https://tf.cchmc.org/s/zvu1t
