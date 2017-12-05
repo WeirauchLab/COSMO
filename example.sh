@@ -142,7 +142,6 @@ else
 
     # tail logfiles while we're waiting for the background jobs to finish
     elapsed=0
-    j=
 
     while (( 1 )); do
         clear
@@ -162,7 +161,7 @@ else
         elapsed=$(( elapsed+=5 ))
 
         # keep the outer (while) loop going unless /none/ of the PIDs are found
-        for j in {1..3}; do silently ps -p ${pids[$j]} && continue 2; done
+        for j in {0..2}; do silently ps -p ${pids[$j]} && continue 2; done
 
         # otherwise no more background jobs; untrap CTRL+C and get out
         trap - 2
