@@ -26,29 +26,47 @@ Python 2.7, with modules:
 
     **Using a package manager**:
 
-        # Debian-like OSes (incl. Ubuntu)
-        sudo apt-get install python-numpy python-scipy
+    ```bash
+    # Debian-like OSes (incl. Ubuntu)
+    sudo apt-get install python-numpy python-scipy
 
-        # Fedora/RHEL/CentOS
-        sudo yum install python27-numpy python27-scipy
+    # Fedora/RHEL/CentOS
+    sudo yum install python27-numpy python27-scipy
 
-        # OS X / macOS using Homebrew (https://brew.sh)
-        brew install numpy scipy
+    # OS X / macOS using Homebrew (https://brew.sh)
+    brew install numpy scipy
 
-        # MacPorts
-        sudo port install py27-numpy py27-scipy
+    # MacPorts
+    sudo port install py27-numpy py27-scipy
 
-        # Windows
-        # FIXME - maybe conda?
+    # Windows
+    # FIXME - maybe conda?
+    ```
 
     **Using [pip][] in a virtualenv**:
 
-        cd /path/to/cosmo
-        virtualenv venv --python=python2
-        source venv/bin/activate
-        pip install -r requirements.txt
+    ```bash
+    cd /path/to/cosmo
+    virtualenv venv --python=python2  # or possibly just 'python'
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
 
 3. Finally, run `./example.sh` within the "cosmo" directory.
+
+    ![Sample invocation of the `example.sh` script](img/example.sh.png)
+
+    The sample script defaults to 100 background scan iterations, which may
+    take a great deal of time to complete. Set `BGSCANS` in the environment
+    if you wish to override this, like so:
+
+    ```bash
+    BGSCANS=3 ./example.sh
+    ```
+
+    Other `example.sh` defaults you can override in a similar fashion are
+    `DISTANCE` (COSMO's `-d` option, default: 10) and `THRESHOLD` (`-t`,
+    default: 0.6). See below for COSMO's other command-line options.
 
 
 ## PARAMETERS

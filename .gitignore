@@ -7,3 +7,5 @@
 *.bed
 MOODS
 venv
+log
+logs
