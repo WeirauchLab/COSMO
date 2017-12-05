@@ -5,6 +5,8 @@
 *.fa
 *.tab*
 *.bed
+*.log
+*.err
 MOODS
 venv
 log

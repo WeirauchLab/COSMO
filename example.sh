@@ -189,7 +189,7 @@ for (( i = 1; i <= $BGSCANS; i++ )); do
 done
 
 echo -ne "\n${BOLD}Collecting stats...${RESET} "
-./cosmostats_v1.py -N $BGSCANS >stats.tab 2>stats.err
+./cosmostats_v1.py -N $BGSCANS >stats.tab 2>"$LOGDIR/stats.err"
 echo -e "${GREEN}done.${RESET}\n\n"
 
 
