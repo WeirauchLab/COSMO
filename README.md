@@ -52,13 +52,14 @@ Python 2.7, with modules:
     pip install -r requirements.txt
     ```
 
-3. Finally, run `./example.sh` within the "cosmo" directory.
+3. Finally, run `./example.sh` within the "cosmo" directory. A typical
+   invocation will look like this:
 
     ![Sample invocation of the `example.sh` script](img/example.sh.png)
 
     The sample script defaults to 100 background scan iterations, which may
-    take a great deal of time to complete. Set `BGSCANS` in the environment
-    if you wish to override this, like so:
+    take a considerable amount of time to complete. Set `BGSCANS` in the
+    environment if you wish to override this, like so:
 
     ```bash
     BGSCANS=3 ./example.sh
