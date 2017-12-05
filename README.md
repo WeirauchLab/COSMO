@@ -73,15 +73,15 @@ Python 2.7, with modules:
 ## PARAMETERS
 
 | Option     | Description
-|------------|----------------------------------------------------------
-| `-fa PATH` | to FastA sequence file
-| `-t`       | Log-odds score threshold (S/Smax) (default is `0.6`)
-| `-P`       | (optional) Pseudocount for MOODS to use (default is `1`)
-| `-p`       | PATH to JASPAR-format PWMs (default is `./jpwm/`)
-| `-d`       | Maximum allowed distance between motifs (default is `10`)
-| `-s`       | Boolean flag to dinucleotide shuffle the input sequence
-| `-N`       | Background run number
-| `-C`       | Boolean flag to save coordinates rather than counts
+|------------|------------------------------------------------------------
+| `-fa PATH` | path to FastA sequence file
+| `-t`       | log-odds score threshold (S/Smax) (default is `0.6`)
+| `-P`       | (_optional_) pseudocount for MOODS to use (default is `1`)
+| `-p PATH`  | path to JASPAR-format PWMs (default is `./jpwm/`)
+| `-d`       | maximum allowed distance between motifs (default is `10`)
+| `-s`       | boolean flag to dinucleotide shuffle the input sequence
+| `-N`       | background run number
+| `-C`       | boolean flag to save coordinates rather than counts
 
 ## USAGE
 
