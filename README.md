@@ -6,11 +6,14 @@ data.
 ## PREREQUISITES
 
 * Python 2.7.x, with the following modules:
-  *	NumPy
-  *	SciPy
-  *	[MOODS v1.0.2.1][moods]
+    * NumPy
+    * SciPy
+    * [MOODS v1.0.2.1][moods] (included)
 * JASPAR-formatted motifs
 * [BEDTOOLS][]-derived FastA DNA sequence file
+
+_MOODS 1.9.x and Python 3 are not currently supported due to breaking changes
+in the MOODS programming interface._
 
 ## INSTALLATION
 
