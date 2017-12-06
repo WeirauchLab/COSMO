@@ -20,7 +20,7 @@ help:
 	@echo
 	@echo "  ${BOLD}${BLUE}clean${RESET}       - remove build/runtime logs"
 	@echo
-	@echo "  ${BOLD}${BLUE}reallyclean${RESET} - ${BLUE}clean${RESET} + remove COSMO output data"
+	@echo "  ${BOLD}${BLUE}reallyclean${RESET} - ${BLUE}clean${RESET} + remove COSMO output data (*.bed, *.tab*)"
 	@echo
 	@echo "  ${BOLD}${BLUE}distclean${RESET}   - ${BLUE}reallyclean${RESET} + remove locally-built MOODS library"
 	@echo "                and uncompressed sample FASTA file"
