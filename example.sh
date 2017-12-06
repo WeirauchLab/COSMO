@@ -114,7 +114,7 @@ if [ ! -f ./MOODS/python/build/lib.$pythonver/MOODS/_cmodule.so ]; then
     silently popd
 fi
 
-export PYTHONPATH=$PYTHONPATH:./MOODS/python/build/lib.$pythonver
+export PYTHONPATH=${PYTHONPATH:-}:./MOODS/python/build/lib.$pythonver
 
 # Don't regenerate the counts/coords files if REUSE=yes/true/1
 if is_set "$REUSE" && [ -f 'cosmo.coords.bed' -a -f 'cosmo.counts.tab' ]; then
