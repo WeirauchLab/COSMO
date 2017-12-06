@@ -162,7 +162,8 @@ else
 
             # suppress column's griping about 'line too long' and non-zero exit
             # (will terminate script if 'set -e' is set)
-            stoically column <(quietly tail -$LOGTAIL "$LOGDIR/bgtask1.log") \
+            stoically \
+                column -c120 <(quietly tail -$LOGTAIL "$LOGDIR/bgtask1.log") \
                              <(quietly tail -$LOGTAIL "$LOGDIR/bgtask2.log") \
                              <(quietly tail -$LOGTAIL "$LOGDIR/bgtask3.log")
         fi
