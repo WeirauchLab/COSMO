@@ -106,16 +106,16 @@ of COSMO's operation manually:
     # vary these parameters to your liking (see PARAMETERS below)
     defaultargs="-fa example.fa -t 0.6 -d 10 -p ./jpwm"
 
-    ./cosmo.py $defaultargs &>1.log &
-    ./cosmo.py $defaultargs &>2.log &
-    ./cosmo.py $defaultargs -C &>3.log &
+    ./cosmo_v1.py $defaultargs &>1.log &
+    ./cosmo_v1.py $defaultargs &>2.log &
+    ./cosmo_v1.py $defaultargs -C &>3.log &
     ```
 
 * wait for all the background jobs to finish, then run a coordinates scan, using
   the results from the three background scans (`-N 3`):
 
     ```bash
-    ./cosmo.py $defaultargs -s -N 3
+    ./cosmo_v1.py $defaultargs -s -N 3
     ```
 
 * finally, compute statistics for the three scans (`-N 3`):
@@ -152,7 +152,7 @@ of COSMO's operation manually:
 
 ### Coordinates scan
 
-    ./cosmo.py -fa ./h3k27ac.fa -t 0.6 -d 10 -C
+    ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10 -C
 
 ### Statistics calculation
 
