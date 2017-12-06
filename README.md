@@ -5,13 +5,12 @@ data.
 
 ## PREREQUISITES
 
-Python 2.7, with modules:
-
-*	NumPy
-*	SciPy
-*	[MOODS v1.0.2.1][moods]
-* JASPAR formatted motifs
-* [BEDTOOLS][] derived FastA DNA sequence file
+* Python 2.7.x, with the following modules:
+  *	NumPy
+  *	SciPy
+  *	[MOODS v1.0.2.1][moods]
+* JASPAR-formatted motifs
+* [BEDTOOLS][]-derived FastA DNA sequence file
 
 ## INSTALLATION
 
@@ -66,10 +65,65 @@ Python 2.7, with modules:
     ```
 
     Other `example.sh` defaults you can override in a similar fashion are
-    `DISTANCE` (COSMO's `-d` option, default: 10) and `THRESHOLD` (`-t`,
-    default: 0.6). See below for COSMO's other command-line options.
+    `DISTANCE` (COSMO's `-d` option, default: 10), `THRESHOLD` (`-t`,
+    default: 0.6), and `PRESERVELOGS` (set to `0` or `false` to remove
+    execution logs upon completion). See below for COSMO's other command-line
+    options.
 
 
+## TROUBLESHOOTING
+
+If `example.sh` has trouble auto-detecting your platform, architecture or Python
+version (_e.g._ MOODS fails to build), here's how you can perform the same tests
+of COSMO's operation manually:
+
+* unpack the MOODS sources, build it, and add the path to `_cmodule.so` to your
+  `PYTHONPATH`, like so
+
+    ```bash
+    test -d MOODS || tar zxf MOODS-x.y.z.tar.gz  # using the included version
+
+    pushd MOODS/src
+    make                                         # add '-j4' if you like
+    cd ../python
+    python setup.py build
+    popd
+
+    # where <ARCH_AND_VERSION> will depend on your platform
+    export PYTHONPATH=$PYTHONPATH:MOODS/python/build/lib.<ARCH_AND_VERSION>
+    ```
+
+    At this point, you should be able to run `./cosmo_v1.py` and get a usage
+    message (but no Python tracebacks).
+
+* unpack the example FASTA file if necessary, and run several background scans
+  (in this example, three), specifying the `-C` (save coordinates) option with
+  the last one:
+
+    ```bash
+    test -f example.fa || gzip -dc <example.fa.gz >example.fa
+
+    # vary these parameters to your liking (see PARAMETERS below)
+    defaultargs="-fa example.fa -t 0.6 -d 10 -p ./jpwm"
+
+    ./cosmo.py $defaultargs &>1.log &
+    ./cosmo.py $defaultargs &>2.log &
+    ./cosmo.py $defaultargs -C &>3.log &
+    ```
+
+* wait for all the background jobs to finish, then run a coordinates scan, using
+  the results from the three background scans (`-N 3`):
+
+    ```bash
+    ./cosmo.py $defaultargs -s -N 3
+    ```
+
+* finally, compute statistics for the three scans (`-N 3`):
+
+   ```bash
+   ./cosmostats_v1.py -N 3
+   ```
+    
 ## PARAMETERS
 
 | Option     | Description

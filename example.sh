@@ -13,9 +13,10 @@ COSMOARGS="-fa ./example.fa -t $THRESHOLD -d $DISTANCE -p ./jpwm/"
 
 # reuse existing cosmo.coords.bed and cosmo.counts.tab?
 REUSE=${REUSE:-}
-DEBUG=${DEBUG:-}
 LOGTAIL=${LOGTAIL:-5}
 LOGDIR=${LOGDIR:-$MYDIR/log}
+# preserve excution logs in $LOGDIR by default
+PRESERVELOGS=${PRESERVELOGS:-1}
 
 declare -a pids
 
@@ -43,13 +44,8 @@ silently() { "$@" &>/dev/null; }
 # just suppress stderr
 quietly() { "$@" 2>/dev/null; }
 
-is_set() {
-    if [[ $1 =~ ^(y|Y|[Tt][Rr][Uu]) || $1 -gt 0 ]]; then
-        return 0
-    else
-        return 1
-    fi
-}
+# test for truthiness of the argument (YES|yes|yup|true|1)
+is_set() { [[ $1 =~ ^(y|Y|[Tt][Rr][Uu]) || $1 -gt 0 ]]; }
 
 killp() {
     # don't die in the middle of the die handler
@@ -60,15 +56,15 @@ killp() {
     set -x; kill $*; set +x
 }
 
-# clean log files on normal exit, unless DEBUG is set to yes/true/1
+# clean log files on normal exit, unless PRESERVELOGS is set to yes/true/1
 cleanup() {
     # don't die in the middle of the die handler
     set +ex
     local sig=$1; shift
     echo -ne "\n${RESET}${MAGENTA}[Caught $sig]:${RESET} " >&2
-    if is_set "$DEBUG"; then 
-        echo -ne "${YELLOW}DEBUG mode set; not touching " >&2
-        echo "'$LOGDIR'${RESET}" >&2
+    if is_set "$PRESERVELOGS"; then 
+        echo -ne "${YELLOW}PRESERVELOGS is set; logs from this session are " >&2
+        echo "saved in '$LOGDIR'${RESET}" >&2
     else
         echo -e "${MAGENTA}Cleaning up log files${RESET}" >&2
         set -x; rm -f "$LOGDIR"/*.log "$LOGDIR"/*.err; set +x
@@ -78,7 +74,7 @@ cleanup() {
 trap "cleanup EXIT; exit" EXIT
 
 # platform / arch / Python version so we can add MOODS to PYTHONPATH
-# set PYTHONPATH manually and re-run this script if detection fails
+# see the "TROUBLESHOOTING" section of the README if autodetection fails
 pythonver=$(python -c '
 from platform import uname, python_version_tuple as ver
 
@@ -92,12 +88,11 @@ test -d "$LOGDIR" || mkdir "$LOGDIR"
 
 # if necessary, build isolated copy of MOODS from source
 if [ ! -f ./MOODS/python/build/lib.$pythonver/MOODS/_cmodule.so ]; then
-    silently pushd .
     echo -ne "\n${BOLD}Unpacking MOODS sources...${RESET} "
     tar xzf MOODS-*.tar.gz
     echo -ne "${BOLD}${GREEN}done.${RESET}\n"
 
-    cd MOODS/src
+    silently pushd MOODS/src
     echo -ne "${BOLD}Building and installing to ./MOODS...${RESET} "
     make -j4 >"$LOGDIR/build.log" 2>"$LOGDIR/build.err"
 
@@ -112,7 +107,7 @@ export PYTHONPATH=$PYTHONPATH:./MOODS/python/build/lib.$pythonver
 
 # Don't regenerate the counts/coords files if REUSE=yes/true/1
 if is_set "$REUSE" && [ -f 'cosmo.coords.bed' -a -f 'cosmo.counts.tab' ]; then
-    echo -ne "\n${YELLOW}REUSE mode set; using existing results "
+    echo -ne "\n${YELLOW}REUSE is set; re-using existing results "
     echo -e "('cosmo.coords.bed' and 'cosmo.counts.tab')${RESET}"
 else
     echo -e "\n${BOLD}Running COSMO analyses...${RESET}\n"
