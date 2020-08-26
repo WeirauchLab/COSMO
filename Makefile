@@ -18,11 +18,14 @@ help:
 	@echo
 	@echo "${UL}${BOLD}${PKGNAME} Makefile help${RESET}"
 	@echo
-	@echo "  ${BOLD}${BLUE}clean${RESET}       - remove build/runtime logs"
+	@echo -n "  ${BOLD}${BLUE}clean${RESET}       - "
+	@echo "remove build/runtime logs"
 	@echo
-	@echo "  ${BOLD}${BLUE}reallyclean${RESET} - ${BLUE}clean${RESET} + remove COSMO output data (*.bed, *.tab*)"
+	@echo -n "  ${BOLD}${BLUE}reallyclean${RESET} - "
+	@echo "${BLUE}clean${RESET} + remove COSMO output data (*.bed, *.tab*)"
 	@echo
-	@echo "  ${BOLD}${BLUE}distclean${RESET}   - ${BLUE}reallyclean${RESET} + remove locally-built MOODS library"
+	@echo -n "  ${BOLD}${BLUE}distclean${RESET}   - "
+	@echo "${BLUE}reallyclean${RESET} + remove locally-built MOODS library"
 	@echo "                and uncompressed sample FASTA file"
 	@echo
 	@false

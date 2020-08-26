@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+# shellcheck disable=SC2128,SC1117
 
 # abort script on *any* non-zero exit status, unset variables
 set -eu
 
-MYDIR=$( cd `dirname "$BASH_SOURCE"` && pwd )
+MYDIR=$( cd "$(dirname "$BASH_SOURCE")" && pwd )
 
 # allow these to be set in the caller's environment
 BGSCANS=${BGSCANS:-100}
@@ -84,6 +85,9 @@ cleanup() {
 
 trap "cleanup EXIT; exit" EXIT
 
+# trace execution if TRACE=1 is set in the environment
+is_set "${TRACE:-}" && set -x
+
 # platform / arch / Python version so we can add MOODS to PYTHONPATH
 # see the "TROUBLESHOOTING" section of the README if autodetection fails
 pythonver=$(python -c '
@@ -100,7 +104,7 @@ test -d "$LOGDIR" || mkdir "$LOGDIR"
 # if necessary, build isolated copy of MOODS from source
 if [ ! -f ./MOODS/python/build/lib.$pythonver/MOODS/_cmodule.so ]; then
     echo -ne "\n${BOLD}Unpacking MOODS sources...${RESET} "
-    tar xzf MOODS-*.tar.gz
+    tar xzf MOODS-1.0.*.tar.gz
     echo -ne "${BOLD}${GREEN}done.${RESET}\n"
 
     silently pushd MOODS/src
@@ -114,10 +118,10 @@ if [ ! -f ./MOODS/python/build/lib.$pythonver/MOODS/_cmodule.so ]; then
     silently popd
 fi
 
-export PYTHONPATH=${PYTHONPATH:-}:./MOODS/python/build/lib.$pythonver
+export PYTHONPATH=$MYDIR/MOODS/python/build/lib.$pythonver${PYTHONPATH:+$PYTHONPATH}
 
 # Don't regenerate the counts/coords files if REUSE=yes/true/1
-if is_set "$REUSE" && [ -f 'cosmo.coords.bed' -a -f 'cosmo.counts.tab' ]; then
+if is_set "$REUSE" && [[ -f 'cosmo.coords.bed' && -f 'cosmo.counts.tab' ]]; then
     echo -ne "\n${YELLOW}REUSE is set; re-using existing results "
     echo -e "('cosmo.coords.bed' and 'cosmo.counts.tab')${RESET}\n"
 else
