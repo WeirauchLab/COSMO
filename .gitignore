@@ -1,3 +1,4 @@
+# editor crumbs
 .*sw?
 *~
 
@@ -5,5 +6,10 @@
 *.fa
 *.tab*
 *.bed
-MOODS
-venv
+*.log
+*.err
+
+# subdirectories that can be recreated
+MOODS/**
+venv/**
+log/**
