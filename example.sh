@@ -99,26 +99,12 @@ print ("%(platform)s-%(arch)s-%(release)s"
            "release":  ".".join([str(x) for x in ver()[:2]]) });
 ')
 
-test -d "$LOGDIR" || mkdir "$LOGDIR"
+test -d "$LOGDIR" || mkdir -p "$LOGDIR"
 
 # if necessary, build isolated copy of MOODS from source
-if [ ! -f ./MOODS/python/build/lib.$pythonver/MOODS/_cmodule.so ]; then
-    echo -ne "\n${BOLD}Unpacking MOODS sources...${RESET} "
-    tar xzf MOODS-1.0.*.tar.gz
-    echo -ne "${BOLD}${GREEN}done.${RESET}\n"
-
-    silently pushd MOODS/src
-    echo -ne "${BOLD}Building and installing to ./MOODS...${RESET} "
-    make -j4 >"$LOGDIR/build.log" 2>"$LOGDIR/build.err"
-
-    cd ../python
-    python setup.py build >>"$LOGDIR/build.log" 2>>"$LOGDIR/build.err"
-    echo -ne "${BOLD}${GREEN}done.${RESET}\n"
-
-    silently popd
+if ! python -c 'import MOODS' 2>/dev/null; then
+    make moods > "$LOGDIR/build.log" 2> "$LOGDIR/build.err"
 fi
-
-export PYTHONPATH=$MYDIR/MOODS/python/build/lib.$pythonver${PYTHONPATH:+$PYTHONPATH}
 
 # Don't regenerate the counts/coords files if REUSE=yes/true/1
 if is_set "$REUSE" && [[ -f 'cosmo.coords.bed' && -f 'cosmo.counts.tab' ]]; then
