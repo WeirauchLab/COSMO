@@ -7,14 +7,21 @@ data.
 ## PREREQUISITES
 
 * Python 2.7.x, with the following packages installed
-    * NumPy
-    * SciPy
+    * pip
+    * virtualenv
+    * numpy
+    * scipy
     * [MOODS v1.0.2.1][moods] (included)
 * JASPAR-formatted motifs
-* [BEDTOOLS][]-derived FASTA DNA sequence file
+* [bedtools][]-derived FASTA DNA sequence file(s)
 
-_MOODS 1.9.x and Python 3 are not currently supported due to breaking changes
-in the MOODS programming interface._
+MOODS 1.9.x and Python 3 are not currently supported due to breaking changes
+in the MOODS programming interface.
+
+If you have multiple Python versions on your system, please ensure that the
+first `python`, `pip`, and `virtualenv` in your [search path][path] are the
+Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
+[Environment Modules][modules]) should handle this for you.
 
 
 ## INSTALLATION
@@ -198,6 +205,8 @@ saved into a BED-formatted file `cosmo.coords.bed`
 
 `FIXME`
 
+[path]: https://en.wikipedia.org/wiki/PATH_(variable)
+[modules]: http://modules.sourceforge.net/
 [moods]: https://www.cs.helsinki.fi/group/pssmfind/
 [bedtools]: http://bedtools.readthedocs.io/en/latest/
 [targz]: https://tfinternal.research.cchmc.org/gitlab/cosmo/cosmo/repository/master/archive.tar.gz
