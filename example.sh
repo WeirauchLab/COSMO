@@ -9,6 +9,8 @@
 ##
 # shellcheck disable=SC2128,SC1117
 
+# trace execution if TRACE=1 is set in the environment
+(( TRACE )) && set -x
 # abort script on *any* non-zero exit status, unset variables
 set -eu
 
@@ -18,7 +20,16 @@ MYDIR=$( cd "$(dirname "$BASH_SOURCE")" && pwd )
 BGSCANS=${BGSCANS:-100}
 DISTANCE=${DISTANCE:-10}
 THRESHOLD=${THRESHOLD:-0.6}
-COSMOARGS="-fa ./example.fa -t $THRESHOLD -d $DISTANCE -p ./jpwm/"
+FASTA=${1:-example.fa}
+# this may be 'python' on your system
+PYTHON=${PYTHON:-python2}
+
+COSMOARGS=(
+    -fa "$FASTA"
+    -t $THRESHOLD     # log-odds score threshold (S/Smax)
+    -d $DISTANCE      # max allowed distance between motifs
+    -p ./jpwm         # path to JASPAR-format PWMs
+)
 
 # reuse existing cosmo.coords.bed and cosmo.counts.tab?
 REUSE=${REUSE:-}
@@ -32,7 +43,6 @@ INTERACTIVE=${INTERACTIVE:-1}
 declare -a pids
 declare -i elapsed=0
 declare -i ret
-declare pythonver
 
 if tty -s; then
     UL=$(tput sgr 0 1)
@@ -71,8 +81,8 @@ killp() {
     # don't die in the middle of the die handler
     set +ex
     local sig=$1; shift
-    echo -ne "\n${RESET}${MAGENTA}[Caught $sig]:${RESET} " >&2
-    echo     "${MAGENTA}Killing child processes $*${RESET}" >&2
+    echo -n "${RESET}${MAGENTA}[Caught $sig]:${RESET} " >&2
+    echo    "${MAGENTA}Killing child processes $*${RESET}" >&2
     set -x; kill $*; set +x
 }
 
@@ -81,37 +91,26 @@ cleanup() {
     # don't die in the middle of the die handler
     set +ex
     local sig=$1; shift
-    echo -ne "\n${RESET}${MAGENTA}[Caught $sig]:${RESET} " >&2
+    echo -n "${RESET}${MAGENTA}[Caught $sig]:${RESET} " >&2
     if is_set "$PRESERVELOGS"; then 
-        echo -ne "${YELLOW}PRESERVELOGS is set; logs from this session are " >&2
-        echo     "saved in '$LOGDIR'${RESET}" >&2
+        echo -n "${YELLOW}PRESERVELOGS is set; logs from this session are " >&2
+        echo    "saved in '$LOGDIR'${RESET}" >&2
     else
-        echo -e "${MAGENTA}Cleaning up log files${RESET}" >&2
+        echo "${MAGENTA}Cleaning up log files${RESET}" >&2
         set -x; rm -f "$LOGDIR"/*.log "$LOGDIR"/*.err; set +x
     fi
 }
 
 trap "cleanup EXIT; exit" EXIT
 
-# trace execution if TRACE=1 is set in the environment
-is_set "${TRACE:-}" && set -x
-
-# platform / arch / Python version so we can add MOODS to PYTHONPATH
-# see the "TROUBLESHOOTING" section of the README if autodetection fails
-pythonver=$(python -c '
-from platform import uname, python_version_tuple as ver
-
-print ("%(platform)s-%(arch)s-%(release)s"
-       % { "platform": uname()[0].lower(),
-           "arch":     uname()[5],
-           "release":  ".".join([str(x) for x in ver()[:2]]) });
-')
-
 test -d "$LOGDIR" || mkdir -p "$LOGDIR"
 
-# if necessary, build isolated copy of MOODS from source
-if ! python -c 'import MOODS' 2>/dev/null; then
-    make moods > "$LOGDIR/build.log" 2> "$LOGDIR/build.err"
+# make sure MOODS is available with this Python
+if ! "$PYTHON" -c 'import MOODS' 2>/dev/null; then
+    #make moods > "$LOGDIR/build.log" 2> "$LOGDIR/build.err"
+    echo -e "\n$RED${BOLD}ERROR$RESET: " >&2
+    echo -ne "Please build MOODS using instructions in the README.\n" >&2
+    exit 1
 fi
 
 # Don't regenerate the counts/coords files if REUSE=yes/true/1
@@ -124,11 +123,12 @@ else
     # extract the sample FASTA if necessary
     test -f ./example.fa || gzip -dc < example.fa.gz > example.fa
 
-    # semicolon causes a syntax error after a '&'; see https://tf.cchmc.org/s/c2mri
+    # semicolon causes a syntax error after a '&'
+    # see https://mywiki.wooledge.org/BashPitfalls#for_i_in_.7B1..10.7D.3B_do_..2Fsomething_.26.3B_done
     set -x
-    ./cosmo_v1.py $COSMOARGS &> "$LOGDIR/bgtask1.log"    & pids[0]=$!
-    ./cosmo_v1.py $COSMOARGS &> "$LOGDIR/bgtask2.log"    & pids[1]=$!
-    ./cosmo_v1.py $COSMOARGS -C &> "$LOGDIR/bgtask3.log" & pids[2]=$!
+    ./cosmo_v1.py "${COSMOARGS[@]}" &> "$LOGDIR/bgtask1.log"    & pids[0]=$!
+    # demonstrate the "coordinates" (BED) output, too
+    ./cosmo_v1.py "${COSMOARGS[@]}" -C &> "$LOGDIR/bgtask2.log" & pids[1]=$!
 
     # now, trap CTRL+C to kill off background processes before we exit
     trap "killp SIGINT ${pids[*]}; exit 1" SIGINT
@@ -155,15 +155,14 @@ else
         echo     "(${YELLOW}CTRL+C to quit${RESET})"
 
         if interactive; then 
-            echo -ne "\n${UL}Last $LOGTAIL lines of background task #1, 2, 3 "
-            echo -e  "log files, respectively:${RESET}\n"
+            echo -ne "\n${UL}Last $LOGTAIL lines of background task "
+            echo -e  "log files:${RESET}\n"
 
             # suppress column's griping about 'line too long' and non-zero exit
             # (will terminate script if 'set -e' is set)
             stoically \
-                column -c120 <(quietly tail -$LOGTAIL "$LOGDIR/bgtask1.log") \
-                             <(quietly tail -$LOGTAIL "$LOGDIR/bgtask2.log") \
-                             <(quietly tail -$LOGTAIL "$LOGDIR/bgtask3.log")
+                column -c100 <(quietly tail -$LOGTAIL "$LOGDIR/bgtask1.log") \
+                             <(quietly tail -$LOGTAIL "$LOGDIR/bgtask2.log")
         fi
 
         if interactive; then
@@ -173,38 +172,39 @@ else
         fi
 
         # keep the outer (while) loop going unless /none/ of the PIDs are found
-        for j in {0..2}; do silently ps -p ${pids[$j]} && continue 2; done
+        for j in 0 1; do silently ps -p ${pids[$j]} && continue 2; done
 
         # otherwise no more background jobs; untrap CTRL+C and get out
         trap - 2
-        echo -e "\n"
         break
     done
 fi # if REUSE was set and cosmo.coords.bed and cosmo.counts.tab exist
 
-# brace expansion happens before variable interpolation (so 'for i in {1..$var}'
-# won't work), need an arithmetic 'for' loop; see https://tf.cchmc.org/s/zvu1t
+# brace expansion happens before variable interpolation ('for i in
+# {1..$var}' won't work without `eval`); need a real 'for' loop here
+# see https://mywiki.wooledge.org/BashPitfalls#for_i_in_.7B1...24n.7D
 for (( i = 1; i <= $BGSCANS; i++ )); do
     echo -ne "${BOLD}Running background scan iteration #$i / "
     echo -n  "$BGSCANS${RESET}... "
 
     echo "==== Commencing scan iteration #$i/$BGSCANS at $(date -R)" \
-        >>"$LOGDIR/bgscans.log"
+        >>"$LOGDIR/bgscan.$i.log"
 
-    set +e; ./cosmo_v1.py $COSMOARGS -s -N $i &>>"$LOGDIR/bgscans.log"
+    set +e  # allow these to fail without terminating the script
+    ./cosmo_v1.py "${COSMOARGS[@]}" -s -N $i &>>"$LOGDIR/bgscan.$i.log"
     ret=$?
     set -e
 
     if (( $ret )); then
         echo     "${BOLD}${RED}failed!${RESET}"
-        echo -ne "Error in iteration #$i; check '$LOGDIR/bgscans.log'\n" >&2
+        echo -ne "Error in iteration #$i; check '$LOGDIR/bgscan.$i.log'\n" >&2
 
         echo  "!!!! Failed iteration #$i/$BGSCANS at $(date -R)" \
-            >>"$LOGDIR/bgscans.log"
+            >>"$LOGDIR/bgscan.$i.log"
     else
         echo "${GREEN}done.${RESET}"
         echo "==== Finished iteration #$i/$BGSCANS at $(date -R)" \
-            >>"$LOGDIR/bgscans.log"
+            >>"$LOGDIR/bgscan.$i.log"
     fi
 done
 
