@@ -5,7 +5,7 @@ LOGDIR = log
 SHELL = bash
 # this might be 'python2' on some systems like Ubuntu LTS; if that's the case,
 # it's best to just create a virtualenv using that Python, then activate it
-PYTHON = python
+PYTHON = python2
 PYTHONVER := $(shell $(PYTHON) -c 'import sys; print("%d.%d.%d" % (sys.version_info.major, sys.version_info.minor, sys.version_info.micro))')
 VIRTUALENV = venv
 

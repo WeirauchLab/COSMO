@@ -1,4 +1,12 @@
 #!/usr/bin/env bash
+##
+##  Example wrapper script for COSMO
+##
+##  Author:   Kevin Ernst <kevin.ernst@cchmc.org>
+##  License:  GPLv3; see LICENSE.txt
+##
+##  © 2017 Cincinnati Children's Hospital Medical Center and contributors
+##
 # shellcheck disable=SC2128,SC1117
 
 # abort script on *any* non-zero exit status, unset variables
