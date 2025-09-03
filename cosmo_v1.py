@@ -1,5 +1,13 @@
-#!/usr/bin/env python
-#/usr/local/python/2.7.5/bin/python
+#!/usr/bin/env python2
+# vim: fileencoding=utf-8
+##
+##  Detect enriched composite motifs in genomic sequence data
+##
+##  Author:   Jeremy Riddell <riddeljr@mail.uc.edu>
+##  License:  GPLv3
+##
+## © 2022 Cincinnati Children's Hospital and contributors
+##
 from collections import defaultdict
 import argparse
 import math

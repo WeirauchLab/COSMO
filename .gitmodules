@@ -1,3 +1,5 @@
 [submodule "MOODS"]
 	path = MOODS
 	url = https://github.com/jhkorhonen/MOODS.git
+    ; h/t: https://stackoverflow.com/a/12332080
+	ignore = untracked

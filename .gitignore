@@ -10,6 +10,8 @@
 *.err
 
 # subdirectories that can be recreated
-MOODS/**
-venv/**
 log/**
+venv/**
+
+# see .gitmodules for others which pertain to MOODS
+# hat tip: https://stackoverflow.com/a/12332080

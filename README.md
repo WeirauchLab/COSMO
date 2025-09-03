@@ -203,7 +203,11 @@ saved into a BED-formatted file `cosmo.coords.bed`
 
 ## LICENSE
 
-`FIXME`
+The rights holders are Cincinnati Children's Hospital Medical Center and the
+contributors.
+
+The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
+[`LICENSE.txt`](LICENSE.txt) for details.
 
 [path]: https://en.wikipedia.org/wiki/PATH_(variable)
 [modules]: http://modules.sourceforge.net/
@@ -214,3 +218,4 @@ saved into a BED-formatted file `cosmo.coords.bed`
 [pip]: https://pip.pypa.io/en/stable/installing/
 [jr]: mailto:riddeljr@mail.uc.edu
 [ke]: kevin.ernst@cchmc.org
+[moodscopy]: https://github.com/jhkorhonen/MOODS/blob/master/COPYING.GPLv3
