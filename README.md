@@ -252,6 +252,17 @@ input or output formats in a non-backward-compatible way — then you must:
 See [semver.org][] for more information.
 
 
+## KNOWN ISSUES
+
+1. FASTA inputs must have headers in `chrN:<start>-<end>` format, where `N` is
+   the chromosome number; the nucleotide sequences must also be on a single line.
+  * see [GitLab issue #5][issue5]
+2. Given FASTA inputs above about 100 MB, COSMO takes a long time to finish;
+   see [GitLab issue #7][issue7].
+  * As a, workaround split large FASTAs into multiple files before the `>`
+    sequence header lines and concatenate the results from COSMO.
+
+
 ## CONTRIBUTORS
 
 | Name                  | Email                            | Role                   |
@@ -281,3 +292,5 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [ke]: kevin.ernst@cchmc.org
 [moodscopy]: https://github.com/jhkorhonen/MOODS/blob/master/COPYING.GPLv3
 [semver.org]: https://semver.org
+[issue5]: https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo/-/issues/5
+[issue7]: https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo/-/issues/7
