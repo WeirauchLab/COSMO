@@ -44,6 +44,11 @@ cosmo.counts.tab: $(EXAMPLEFASTA)
 bgscans = $(shell echo cosmo.counts.tab.{1..$(BGSCANS)})
 stats.tab: cosmo.counts.tab $(bgscans)
 	./cosmostats.py -N $(BGSCANS) > $@
+	@if [[ ! -s $@ ]]; then \
+		echo "$(ERROR) Output file '$@' was empty. Can't continue." >&2; \
+		rm $@; \
+		exit 1; \
+	fi
 
 # for testing only; RANDSEED is incremented by the shuffle run number,
 # otherwise the counts from each of the background scans will be the same

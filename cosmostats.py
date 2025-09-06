@@ -6,6 +6,10 @@
 ##  Author:   Jeremy Riddell <riddeljr@mail.uc.edu>
 ##  License:  GPLv3
 ##
+##  TODO:     Doesn't really need to exist as a separate script, and even if it
+##            does, the number of background runs could be detected from files
+##            existing on the filesystem.
+##
 ## © 2022 Cincinnati Children's Hospital and contributors
 ##
 from __future__ import print_function
@@ -17,45 +21,44 @@ import numpy as np
 from collections import defaultdict as dd
 from scipy.stats.distributions import norm
 
+COUNTSFILE = 'cosmo.counts.tab'
 DEFAULT_NUMBER = 1
 DEBUG = os.getenv('DEBUG')
-
-file1 = "./cosmo.counts.tab"
-file2 = "./cosmo.counts.tab."
-result_dict = dd(list)
 
 parser = argparse.ArgumentParser(description='COSMOS Composite Motif Scanner v2')
 parser.add_argument('-N', '--number', type=int, required=True,
                     dest='shuffle_number', help='number of bg scans')
 
 args = parser.parse_args()
+result_dict = dd(list)
 
-def add_result_dict(fname):
-    with open(fname, 'r') as f:
-        for line in f:
-            line = line.split('|')
-            key = '|'.join(line[0:4])
-            value = line[4].strip()
-            result_dict[key].append(value)
+# build the results dictionary from the (unshuffled) counts file
+with open(COUNTSFILE, 'r') as f:
+    for line in f:
+        line = line.strip().split('|')
+        key = '|'.join(line[0:4])
+        value = line[4]
+        result_dict[key].append(int(value))
 
-def append_dict(fname, list_index):
-    with open(fname, 'r') as g:
-        for line in g:
-            temp_list = line.split('|')
-            key = '|'.join(temp_list[0:4])
-            value = temp_list[4].strip()
-            if key in result_dict:
-                result_dict[key][list_index] = value
-
-
-add_result_dict(file1)
+# append results from background (dinuc-shuffled) counts files
 for i in range(1, args.shuffle_number + 1):
+    # default to zero counts for this shuffle iteration…
     for key in result_dict:
         result_dict[key].append(0)
-    append_dict(file2 + str(i), i)
+
+    fname = "%s.%d" % (COUNTSFILE, i)
+    # …but update with the actual value if the key matches
+    with open(fname, 'r') as f:
+        for line in f:
+            line = line.strip().split('|')
+            key = '|'.join(line[0:4])
+            value = line[4]
+            if key in result_dict:
+                result_dict[key][i] = int(value)
 
 print('\t'.join(["TF1|TF2|{F/R}|D", "COUNTS", "n", "mu", "SD", "FC", "Z",
                  "p-value"]))
+
 scores = []
 score_list = []
 for key in result_dict:
