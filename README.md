@@ -29,22 +29,68 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
 
         GITLAB=https://tfinternal.research.cchmc.org/gitlab
         git clone --recursive $GITLAB/cosmo/cosmo.git
+        cd cosmo
 
     * as an alternative, download the [latest release tarball][targz]
       ([.zip][zip]) from GitLab, then unpack it into a local directory; see
       the [TROUBLESHOOTING](#troubleshooting) section for instructions on
       downloading and building MOODS from source
 
-2. Switch into the fresh clone and build the MOODS C library and Python module
+2. If you have Docker:
 
-        cd cosmo
+    docker run --rm -it -v .:/src cosmo
+    docker run --rm -it -v .:/src cosmo make -j4 test
+
+
+2. If you want to use a local Python installation instead, create a Python 2.7
+   [virtualenv][], activate it, and install any necessary dependencies:
+
+        # in the 'cosmo' subdirectory from 'git clone' above
+        python -m virtualenv venv
+        . venv/bin/activate
+        
+        # if you don't already have a 'pip' for Python 2.7.x
+        wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
+        python get-pip.py
+        pip install -r requirements.txt
+
+   If you have some other Python 2.7 environment (such as Conda or Environment
+   Modules), you probably know what to do on your own. If you have trouble with
+   this step, try the Docker method described [below](#development-and-testing).
+
+2. Next, build the MOODS C library and install the Python module into the
+   virtualenv:
+
+        # in the 'cosmo' subdirectory from 'git clone' above
         make moods
 
-3. To make sure everything works, you can run a simple test like this:
+3. Finally, to make sure everything works, you run the `make test` target in
+   the included [`Makefile`](Makefile) (assumes a Unix environment):
+
+        make test -j4  # run parallel tasks on up to 4 CPU cores
+
+See [DETAILED INSTALLATION](#detailed-installation) below if you're on Windows,
+or if you have any problems with the instructions above or the running the
+scripts.
 
 
-See [DETAILED INSTALLATION](#detailed-installation) below if you have any
-problems with the instructions above or the running the scripts.
+### Local installation
+
+Provided you've run the `make moods` target as prescribed above, you can
+install `cosmo.py` and `cosmostats.py` as `cosmo` and `cosmostats`,
+respectively, making them available in your shell's [search path][path]:
+
+    # use either of these if you create a virtualenv as directed above
+    python setup.py install
+    pip install .
+
+    # try either of these if the above yields an error about permissions
+    python setup.py install --user
+    pip install --user .
+
+If if this is succesful, you can run `cosmo` or `cosmostats` from any directory
+on your filesystem, without needing to specify the relative pathnames like
+`./cosmo.py` in the examples below.
 
 
 ## USAGE
@@ -219,7 +265,7 @@ _e.g._, with `column -t`, or opened in a spreadsheet program such as Excel,
 Google Sheets, or LibreOffice.
 
 
-## DEVELOPMENT &amp; TESTING
+## DEVELOPMENT AND TESTING
 
 You can use the included `Dockerfile` to simplify local development; it builds
 a minimal Debian Linux container with GNU Make and the latest release of Python
@@ -281,9 +327,11 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [`LICENSE.txt`](LICENSE.txt) for details.
 
 [path]: https://en.wikipedia.org/wiki/PATH_(variable)
-[modules]: http://modules.sourceforge.net/
 [moods]: https://www.cs.helsinki.fi/group/pssmfind/
 [bedtools]: http://bedtools.readthedocs.io/en/latest/
+[virtualenv]: https://virtualenv.pypa.io/en/latest/user_guide.html
+[path]: https://en.wikipedia.org/wiki/PATH_(variable)
+[modules]: http://modules.sourceforge.net/
 [targz]: https://tfinternal.research.cchmc.org/gitlab/cosmo/cosmo/repository/master/archive.tar.gz
 [bed]: https://genome.ucsc.edu/FAQ/FAQformat.html#format1
 [zip]: https://tfinternal.research.cchmc.org/gitlab/cosmo/cosmo/repository/master/archive.zip

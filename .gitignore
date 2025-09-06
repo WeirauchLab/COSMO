@@ -15,6 +15,11 @@
 !examples/output/*.tab*
 !examples/output/*.bed
 
+# Python setuptools stuff
+build/**
+*.egg-info/**
+dist/**
+
 # subdirectories that can be recreated
 log/**
 venv/**
