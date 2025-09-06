@@ -11,7 +11,7 @@ from setuptools import setup, find_packages
 
 PROJECT_NAME = 'cosmo'
 VERSION = '1.1.0'
-PROJECTHOME = 'https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo'
+PROJECTHOME = 'https://github.com/weirauchlab/cosmo'
 
 # read and reformat a file suitable for 'long_description'
 # source: https://pythonhosted.org/an_example_pypi_project/setuptools.html

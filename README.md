@@ -27,14 +27,13 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
 
 1. Clone the source from GitLab (MOODS v1.0.2.1 is provided as a submodule):
 
-        GITLAB=https://tfinternal.research.cchmc.org/gitlab
-        git clone --recursive $GITLAB/cosmo/cosmo.git
+        git clone --recursive https://github.com/weirauchlab/cosmo/cosmo.git
         cd cosmo
 
-    * as an alternative, download the [latest release tarball][targz]
-      ([.zip][zip]) from GitLab, then unpack it into a local directory; see
-      the [TROUBLESHOOTING](#troubleshooting) section for instructions on
-      downloading and building MOODS from source
+    * as an alternative, download the [latest release archive][zip]
+      from GitHub, then unpack it into a local directory; see the
+      [DETAILED INSTALLATION](#detailed-installation) section for instructions
+      on downloading and building MOODS from source
 
 1. If you have Docker:
 
@@ -300,9 +299,7 @@ See [semver.org][] for more information.
 
 1. FASTA inputs must have headers in `chrN:<start>-<end>` format, where `N` is
    the chromosome number; the nucleotide sequences must also be on a single line.
-    * see [GitLab issue #5][issue5]
-2. Given FASTA inputs above about 100 MB, COSMO takes a long time to finish;
-   see [GitLab issue #7][issue7].
+2. Given FASTA inputs above about 100 MB, COSMO takes a long time to finish.
     * As a workaround split large FASTAs into multiple files before the `>`
       sequence header lines and concatenate the results from COSMO.
 
@@ -330,14 +327,11 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [virtualenv]: https://virtualenv.pypa.io/en/latest/user_guide.html
 [path]: https://en.wikipedia.org/wiki/PATH_(variable)
 [modules]: http://modules.sourceforge.net/
-[targz]: https://tfinternal.research.cchmc.org/gitlab/cosmo/cosmo/repository/master/archive.tar.gz
+[zip]: https://github.com/WeirauchLab/cosmo/archive/refs/heads/github.zip
 [bed]: https://genome.ucsc.edu/FAQ/FAQformat.html#format1
-[zip]: https://tfinternal.research.cchmc.org/gitlab/cosmo/cosmo/repository/master/archive.zip
 [pip]: https://pip.pypa.io/en/stable/installing/
 [jr]: mailto:riddeljr@mail.uc.edu
 [ke]: kevin.ernst@cchmc.org
 [mw]: matthew.weirauch@cchmc.org
 [moodscopy]: https://github.com/jhkorhonen/MOODS/blob/master/COPYING.GPLv3
 [semver.org]: https://semver.org
-[issue5]: https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo/-/issues/5
-[issue7]: https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo/-/issues/7
