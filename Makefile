@@ -1,5 +1,5 @@
 TITLE = COSMO tasks
-VERSION = 1.0.1
+VERSION = $(shell sed -n "s/.*VERSION *= *['\"]\(.*\)['\"].*/\1/p" setup.py)
 HOMEPAGE = https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo
 LOGDIR = log
 SHELL = bash
