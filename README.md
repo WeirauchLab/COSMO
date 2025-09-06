@@ -6,12 +6,11 @@ data.
 
 ## PREREQUISITES
 
-* Python 2.7.x, with the following packages installed
-    * pip
-    * virtualenv
-    * numpy
-    * scipy
-    * [MOODS v1.0.2.1][moods] (included)
+* Python 2.7.x, with the following packages installed:
+  * pip
+  * virtualenv
+  * numpy and scipy (accounted for by the instructions below)
+  * [MOODS v1.0.2.1][moods] (ditto)
 * JASPAR-formatted motifs
 * [bedtools][]-derived FASTA DNA sequence file(s)
 
@@ -24,7 +23,7 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
 [Environment Modules][modules]) should handle this for you.
 
 
-## INSTALLATION
+## QUICK START
 
 1. Clone the source from GitLab (MOODS v1.0.2.1 is provided as a submodule):
 
@@ -41,29 +40,94 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
         cd cosmo
         make moods
 
-3. Finally, run `./example.sh` within the "cosmo" directory. A typical
-   invocation will look like this:
-
-    ![Sample invocation of the `example.sh` script](img/example.sh.png)
-
-    The sample script defaults to 100 background scan iterations, which may
-    take a considerable amount of time to complete. Set `BGSCANS` in the
-    environment if you wish to override this, like so:
-
-        BGSCANS=3 ./example.sh
-
-    Other `example.sh` defaults you can override in a similar fashion are
-    `DISTANCE` (COSMO's `-d` option, default: 10), `THRESHOLD` (`-t`,
-    default: 0.6), and `PRESERVELOGS` (set to `0` or `false` to remove
-    execution logs upon completion). See below for COSMO's other command-line
-    options.
+3. To make sure everything works, you can run a simple test like this:
 
 
-## TROUBLESHOOTING
+See [DETAILED INSTALLATION](#detailed-installation) below if you have any
+problems with the instructions above or the running the scripts.
 
-If `example.sh` has trouble auto-detecting your platform, architecture or
-Python version (_e.g._ MOODS fails to build), here's how you can perform the
-same tests of COSMO's operation manually.
+
+## USAGE
+
+The [`cosmo.py`](cosmo.py) script does the actual scanning of the FASTA, and
+[`cosmostats.py`](cosmostats.py) compiles summary statistics into a file
+named `stats.tab` in your current working directory.
+
+### Outputs
+
+COSMO writes counts for stereopairs to the local directory in the file
+`cosmo.counts.tab`.  Background scans (with parameters `-s` and `-N <x>`) are
+placed into sequential files named `cosmo.counts.tab.<x>`).  Coordinates (with
+the `-C` option, explained below) are saved into a [BED][]-formatted file
+`cosmo.coords.bed`
+
+### Foreground scan
+
+`cosmo.py` supports the following command-line options:
+
+| Option     | Description
+|------------|------------------------------------------------------------
+| `-fa PATH` | path to FASTA sequence file
+| `-t`       | log-odds score threshold (S/Smax) (default is `0.6`)
+| `-P`       | (_optional_) pseudocount for MOODS to use (default is `1`)
+| `-p PATH`  | path to JASPAR-format PWMs (default is `./jpwm`)
+| `-d`       | maximum allowed distance between motifs (default is `10`)
+| `-s`       | boolean flag to dinucleotide shuffle the input sequence
+| `-N`       | background run number
+| `-C`       | boolean flag to save coordinates rather than counts
+
+Example:
+
+    # scan a .fa file in the current working directory, with a specific
+    # log-odds threshold score and max. allowed distance between motifs
+    # (the defaults are 0.6 and 10, respectively)
+    ./cosmo.py -fa h3k27ac.fa -t 0.75 -d 20
+
+### Background scans
+
+Use `-N <number>` to start a specific number of background runs.
+Use `-s` to dinucleotide-shuffle the input sequences.
+
+    ./cosmo.py -fa h3k27ac.fa -s -N 1
+    ./cosmo.py -fa h3k27ac.fa -s -N 2
+    ⋮
+    ./cosmo.py -fa h3k27ac.fa -s -N <n>
+
+For a large number of background runs, this is best accomplished in a 'for'
+loop in your favorite shell. Assuming Bash or Z shell:
+
+    runs=100
+    for (( i=1; i<=runs; i++ )); do
+        ./cosmo.py -fa h3k27ac.fa -s -N $i
+    done
+
+### Coordinates scan
+
+The `-C` option produces outputs that are genomic coordinates in BED format,
+rather than counts:
+
+    ./cosmo.py -fa h3k27ac.fa -C
+
+### Statistics calculation
+
+    # combine existing 'cosmo.counts.tab*' files into summary stats
+    ./cosmostats.py -N 100
+
+Combined with the example above, for 100 background scans:
+
+    runs=100
+
+    # assuming Bash or Z shell…
+    for (( i=1; i<=runs; i++ )); do
+        ./cosmo.py -fa h3k27ac.fa -s -N $i
+    done
+
+    ./cosmostats.py -N $runs
+
+## DETAILED INSTALLATION
+
+If you have problems with the [QUICK START](#quick-start) section (_e.g._ MOODS
+fails to build), here's a fully-manual installation, spelled out.
 
 ### If you `git clone`d the repository
 
@@ -83,7 +147,7 @@ have the MOODS submodule. Do this:
 When you are reminded, run `source venv/bin/activate` to switch on the Python
 virtual environment; this is how COSMO finds MOODS.
 
-At this point, you should be able to run `./cosmo_v1.py` and get a usage
+At this point, you should be able to run `./cosmo.py` and get a usage
 message (but no Python tracebacks).
 
 Skip to "[Running on example FASTA](#running-on-example-fasta)."
@@ -121,7 +185,7 @@ reproduce what the Makefile does:
     moodspath=$PWD/MOODS/python/build/lib.$pyplatform
     export PYTHONPATH=$moodspath${PYTHONPATH:+:$PYTHONPATH}
 
-At this point, you should be able to run `./cosmo_v1.py` and get a usage
+At this point, you should be able to run `./cosmo.py` and get a usage
 message (but no Python tracebacks).
 
 ### Running on example FASTA
@@ -132,73 +196,35 @@ with the last one:
 
     test -f example.fa || gunzip example.fa.gz
 
-    # vary these parameters to your liking (see PARAMETERS below)
+    # vary these parameters to your liking (see USAGE section, above)
     defaultargs="-fa example.fa -t 0.6 -d 10 -p ./jpwm"
 
-    ./cosmo_v1.py $defaultargs &>1.log &
-    ./cosmo_v1.py $defaultargs &>2.log &
-    ./cosmo_v1.py $defaultargs -C &>3.log &
+    ./cosmo.py $defaultargs &>1.log &
+    ./cosmo.py $defaultargs &>2.log &
+    ./cosmo.py $defaultargs -C &>3.log &
 
 Wait for all the background jobs to finish, then run a coordinates scan, using
 the results from the three background scans (`-N 3`):
 
-    ./cosmo_v1.py $defaultargs -s -N 3
+    ./cosmo.py $defaultargs -s -N 3
 
-Finally, compute statistics for the three scans (`-N 3`):
+Finally, compute statistics for the three scans (`-N 3`) and redirect this
+output into a file named `stats.tab`:
 
-    ./cosmostats_v1.py -N 3
+    ./cosmostats.py -N 3 > stats.tab
 
-
-## PARAMETERS
-
-| Option     | Description
-|------------|------------------------------------------------------------
-| `-fa PATH` | path to FASTA sequence file
-| `-t`       | log-odds score threshold (S/Smax) (default is `0.6`)
-| `-P`       | (_optional_) pseudocount for MOODS to use (default is `1`)
-| `-p PATH`  | path to JASPAR-format PWMs (default is `./jpwm/`)
-| `-d`       | maximum allowed distance between motifs (default is `10`)
-| `-s`       | boolean flag to dinucleotide shuffle the input sequence
-| `-N`       | background run number
-| `-C`       | boolean flag to save coordinates rather than counts
-
-
-## USAGE
-
-### Foreground scan
-
-    ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10
-
-### Background scans
-
-    ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10 -s -N 1
-    ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10 -s -N 2
-    ...
-    ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10 -s -N 100
-
-### Coordinates scan
-
-    ./cosmo_v1.py -fa ./h3k27ac.fa -t 0.6 -d 10 -C
-
-### Statistics calculation
-
-    ./cosmostats_v1.py -N 100
-
-
-## OUTPUT
-
-COSMO writes counts for stereopairs to the local directory in the file
-`cosmo.counts.tab`.  Background scans (with parameters `-s` and `-N <x>`) are
-placed into sequential files named `cosmo.counts.tab.<x>`).  Coordinates are
-saved into a BED-formatted file `cosmo.coords.bed`
+The output `stats.tab` is tab-delimited, and may be viewed in the terminal,
+_e.g._, with `column -t`, or opened in a spreadsheet program such as Excel,
+Google Sheets, or LibreOffice.
 
 
 ## CONTRIBUTORS
 
-| Name            | Email                       | Contribution    |
-|-----------------|-----------------------------|-----------------|
-| Jeremy Riddell  | [riddeljr@mail.uc.edu][jr]  | Primary author  |
-| Kevin Ernst     | [kevin.ernst@cchmc.org][ke] | Maintainer      |
+| Name                  | Email                            | Role                   |
+|-----------------------|----------------------------------|------------------------|
+| Jeremy Riddell        | [riddeljr@mail.uc.edu][jr]       | Primary author         |
+| Kevin Ernst           | [kevin.ernst@cchmc.org][ke]      | Contributor            |
+| Matthew Weirauch, PhD | [matthew.weirauch@cchmc.org][mw] | Principal Investigator |
 
 
 ## LICENSE
@@ -214,6 +240,7 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [moods]: https://www.cs.helsinki.fi/group/pssmfind/
 [bedtools]: http://bedtools.readthedocs.io/en/latest/
 [targz]: https://tfinternal.research.cchmc.org/gitlab/cosmo/cosmo/repository/master/archive.tar.gz
+[bed]: https://genome.ucsc.edu/FAQ/FAQformat.html#format1
 [zip]: https://tfinternal.research.cchmc.org/gitlab/cosmo/cosmo/repository/master/archive.zip
 [pip]: https://pip.pypa.io/en/stable/installing/
 [jr]: mailto:riddeljr@mail.uc.edu

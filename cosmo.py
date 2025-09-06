@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 # vim: fileencoding=utf-8
 ##
 ##  Detect enriched composite motifs in genomic sequence data
@@ -8,77 +8,90 @@
 ##
 ## © 2022 Cincinnati Children's Hospital and contributors
 ##
-from collections import defaultdict
-import argparse
-import math
-import operator
+from __future__ import print_function
+
 import os
-import random
 import re
+import sys
+import math
+import random
 import string
+import argparse
+import operator
+from collections import defaultdict
 import MOODS
 
-DEFAULT_PSEUDO = int(1)
-DEFAULT_THRESHOLD = float(0.60)
-DEFAULT_PWMDIR = './jpwm/'
-DEFAULT_NUMBER = int(1)
-DEFAULT_DISTANCE = int(10)
+DEFAULT_PSEUDO = 1
+DEFAULT_THRESHOLD = 0.60
+DEFAULT_PWMDIR = 'jpwm'
+DEFAULT_NUMBER = 1
+DEFAULT_DISTANCE = 10
 
-parser = argparse.ArgumentParser(description='COSMOS Composite Motif Scanner v2')
-parser.add_argument('-fa', '--fasta',
-                    required=True,
-                    help='FastA file name goes here')
-parser.add_argument('-P', '--pseudo', type=int,
-                    default=DEFAULT_PSEUDO,
-                    required=False,
+parser = argparse.ArgumentParser(description='COSMO Composite Motif Scanner')
+parser.add_argument('-fa', '--fasta', required=True,
+                    help='FASTA file name goes here')
+parser.add_argument('-P', '--pseudo', type=int, default=DEFAULT_PSEUDO,
                     help='pseudo count')
-parser.add_argument('-t', '--threshold', type=float,
-                    default=DEFAULT_THRESHOLD,
-                    required=False,
-                    help='%MAX LOD score threshold')
-parser.add_argument('-s', '--scramflag',
-                    action='store_true',
-                    default=False,
-                    required=False,
-                    help='use scrambled input sequence')
-parser.add_argument('-p', '--pwmdir', type=str,
-                    default=DEFAULT_PWMDIR,
-                    required=False,
+parser.add_argument('-t', '--threshold', type=float, default=DEFAULT_THRESHOLD,
+                    help='%%MAX LOD score threshold')
+parser.add_argument('-s', '--scramflag', '--shuffle', action='store_true',
+                    help='use shuffled input sequence')
+parser.add_argument('-p', '--pwmdir', default=DEFAULT_PWMDIR,
                     help='PWMs to use')
 parser.add_argument('-N', '--number', type=int,
-                    default=DEFAULT_NUMBER,
-                    required=False,
-                    help='shuffle run number')
-parser.add_argument('-C', '--coord',
-                    action='store_true',
-                    default=False,
-                    required=False,
+                    help="shuffle run number (use with '-s')")
+parser.add_argument('-C', '--coord', action='store_true',
                     help='scan for coordinates only')
-parser.add_argument('-d', '--distance', type=int,
-                    default=DEFAULT_DISTANCE,
-                    required=False,
+parser.add_argument('-d', '--distance', type=int, default=DEFAULT_DISTANCE,
                     help='max PWM distance')
+parser.add_argument('--seed', '--random-seed',
+                    help='seed the random number generator (for testing)')
 
 args = parser.parse_args()
 
-fasta_file = str(args.fasta)
-pseudo = int(args.pseudo)
-threshold = float(args.threshold)
-scram_flag = bool(args.scramflag)
-pwm_directory = str(args.pwmdir)
-shuffle_number = int(args.number)
-coord_flag = bool(args.coord)
-max_distance = int(args.distance)
-min_distance = int(-6)
+# seeding the RNG allows for reproducible tests
+if args.seed or os.getenv('RANDSEED'):
+    seed = args.seed if args.seed else os.getenv('RANDSEED')
+    print("Seeding random number generator with '%s'…" % seed, file=sys.stderr)
+    random.seed(seed)
+
+fasta_file = args.fasta
+pseudo = args.pseudo
+threshold = args.threshold
+scram_flag = args.scramflag  # FIXME: bad naming, but don't want to break API
+pwm_directory = args.pwmdir
+shuffle_number = args.number
+coord_flag = args.coord
+max_distance = args.distance
+min_distance = -6
 outfile_prefix = "cosmo"
 
-if scram_flag == False:
-    if coord_flag == True:
-        outfile = outfile_prefix + ".coords.bed"
-    else:
-        outfile = outfile_prefix + ".counts.tab"
-else:
+if not os.path.exists(pwm_directory) or not os.access(pwm_directory, os.R_OK):
+    print("ERROR: JASPAR PWM path does not exist or isn't readable; try "
+          "'--help'.", file=sys.stderr)
+    sys.exit(1)
+
+if shuffle_number and not scram_flag:  # just infer it
+    print("Inferring '--shuffle' because you supplied '-N' / '--number'.",
+          file=sys.stderr)
+    scram_flag = True
+elif scram_flag and not shuffle_number:
+    print("ERROR: The '-s' / '--shuffle' option requires '-N' / '--number'.",
+          file=sys.stderr)
+    sys.exit(1)
+elif scram_flag and coord_flag:
+    print("ERROR: The '-s' / '--shuffle' option is mutually-exclusive with "
+          " '-C' / '--coord'.", file=sys.stderr)
+    sys.exit(1)
+
+if scram_flag:
+    if not shuffle_number:
+        shuffle_number = DEFAULT_NUMBER
     outfile = outfile_prefix + ".counts.tab." + str(shuffle_number)
+elif coord_flag:
+    outfile = outfile_prefix + ".coords.bed"
+else:
+    outfile = outfile_prefix + ".counts.tab"
 
 motif_files = []
 motif_dict = {}
@@ -293,10 +306,10 @@ bg = MOODS.flatbg()
 matrix_max_list = []
 matrix_name_list = [
     filename for filename in os.listdir(pwm_directory)
-    if filename[-5:] == '.jpwm'
+    if filename.endswith('.jpwm')
 ]
 matrix_list = [
-    MOODS.load_matrix(pwm_directory + filename)
+    MOODS.load_matrix(os.path.join(pwm_directory, filename))
     for filename in matrix_name_list
 ]
 matrix_list = [
@@ -309,16 +322,18 @@ threshold_list = [(float(threshold) * matrix_max)
 
 seq_dict = load_fasta(fasta_file)
 seq_list = seq_dict.keys()
-
-total = float(len(seq_list))
-
-#for i in range(0,num_rand+1):
-counter = 0.0
+counter = 0
 
 for seq_id in seq_list:
-    counter = counter + 1.0
-    percent_complete = float(counter / total * 100.0)
-    print '%.3f' % percent_complete, '%', seq_id
+    counter = counter + 1
+    percent_complete = counter / float(len(seq_list)) * 100
+
+    if sys.stdout.isatty():
+        print("\r%5.1f%%  %-30s" % (percent_complete, seq_id), end='')
+        sys.stdout.flush()
+    else:
+        print("%5.1f%%  %s" % (percent_complete, seq_id))
+
     hit_list = []
     result_list = []
     seq_chr, seq_start, seq_end = re.split(r'[-:]', str(seq_id))
@@ -433,6 +448,9 @@ for seq_id in seq_list:
                     f.write('\t'.join(cm) + '\n')
     for key in cmseq_dict:
         cmseq_dict[key] = []
+
+if sys.stdout.isatty():
+    print()  # inline progress had no terminating newline
 
 if coord_flag == False:
     with open(outfile, 'w') as f:

@@ -81,8 +81,8 @@ killp() {
     # don't die in the middle of the die handler
     set +ex
     local sig=$1; shift
-    echo -n "${RESET}${MAGENTA}[Caught $sig]:${RESET} " >&2
-    echo    "${MAGENTA}Killing child processes $*${RESET}" >&2
+    echo -en "\n${RESET}${MAGENTA}[Caught $sig]:${RESET} " >&2
+    echo     "${MAGENTA}Killing child processes $*${RESET}" >&2
     set -x; kill $*; set +x
 }
 
@@ -91,7 +91,7 @@ cleanup() {
     # don't die in the middle of the die handler
     set +ex
     local sig=$1; shift
-    echo -n "${RESET}${MAGENTA}[Caught $sig]:${RESET} " >&2
+    echo -en "\n${RESET}${MAGENTA}[Caught $sig]:${RESET} " >&2
     if is_set "$PRESERVELOGS"; then 
         echo -n "${YELLOW}PRESERVELOGS is set; logs from this session are " >&2
         echo    "saved in '$LOGDIR'${RESET}" >&2
@@ -120,15 +120,12 @@ if is_set "$REUSE" && [[ -f 'cosmo.coords.bed' && -f 'cosmo.counts.tab' ]]; then
 else
     echo -e "\n${BOLD}Running COSMO analyses...${RESET}\n"
 
-    # extract the sample FASTA if necessary
-    test -f ./example.fa || gzip -dc < example.fa.gz > example.fa
-
     # semicolon causes a syntax error after a '&'
     # see https://mywiki.wooledge.org/BashPitfalls#for_i_in_.7B1..10.7D.3B_do_..2Fsomething_.26.3B_done
     set -x
-    ./cosmo_v1.py "${COSMOARGS[@]}" &> "$LOGDIR/bgtask1.log"    & pids[0]=$!
+    ../cosmo.py "${COSMOARGS[@]}" &> "$LOGDIR/bgtask1.log"    & pids[0]=$!
     # demonstrate the "coordinates" (BED) output, too
-    ./cosmo_v1.py "${COSMOARGS[@]}" -C &> "$LOGDIR/bgtask2.log" & pids[1]=$!
+    ../cosmo.py "${COSMOARGS[@]}" -C &> "$LOGDIR/bgtask2.log" & pids[1]=$!
 
     # now, trap CTRL+C to kill off background processes before we exit
     trap "killp SIGINT ${pids[*]}; exit 1" SIGINT
@@ -191,7 +188,7 @@ for (( i = 1; i <= $BGSCANS; i++ )); do
         >>"$LOGDIR/bgscan.$i.log"
 
     set +e  # allow these to fail without terminating the script
-    ./cosmo_v1.py "${COSMOARGS[@]}" -s -N $i &>>"$LOGDIR/bgscan.$i.log"
+    ../cosmo.py "${COSMOARGS[@]}" -s -N $i &>>"$LOGDIR/bgscan.$i.log"
     ret=$?
     set -e
 
@@ -211,7 +208,7 @@ done
 echo -ne "\n${BOLD}Collecting stats...${RESET} "
 
 # had some issues with SciPy errors here
-set +e; ./cosmostats_v1.py -N $BGSCANS >stats.tab 2>"$LOGDIR/stats.err"
+set +e; ./cosmostats.py -N $BGSCANS >stats.tab 2>"$LOGDIR/stats.err"
 ret=$?
 set -e
 

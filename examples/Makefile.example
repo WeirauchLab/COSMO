@@ -1,0 +1,81 @@
+##
+##  Example makefile for COSMO analyses
+##
+##  Author:   Kevin Ernst <kevin.ernst -at- cchmc.org>
+##  Date:     3 September 2025
+##
+##  Notes:    You'll need to copy this to `Makefile` and update the paths to
+##            the `cosmo.py` and `cosmostats.py` scripts. Youc an define the
+##            `JPWMS` environment variable in the shell environment (and be
+##            sure to 'export' it), if you want to avoid hard-coding it here.
+SHELL = bash
+TITLE = COSMO analysis tasks
+JPWMS ?= jpwm
+SCANS = 10
+
+help:  # prints this help
+	@bash -c "$$AUTOGEN_HELP_BASH" < $(firstword $(MAKEFILE_LIST))
+	@echo -e "  $$(tput sgr 0 1)$$(tput bold)Hints$$(tput sgr0)\n"; \
+    echo     "    - Specify the number of background scans for 'shuffle' with SCANS=<n>"; \
+	echo  -e "      e.g., 'make shuffle SCANS=50'; the default is $(SCANS)\n"; \
+	echo  -e "    - For parallel dinuc shuffle scans, try 'make -j\`nproc\` shuffle'.\n"; \
+	echo     "    - Define 'JPWMS' in the environment if your JASPAR matrices are not in"; \
+	echo  -e "      a subdirectory of the c.w.d. named 'jpwm'; be sure to 'export' it.\n"
+
+single: cosmo.counts.tab # run a single pass of COSMO and produce counts 
+
+coords: cosmo.counts.bed # run COSMO and produce BED coordinates
+
+shuffle: stats.tab  # run multiple dinuc-shuffled scans [try SCANS=]
+
+clean:  # remove COSMO output files
+	-rm cosmo.counts.* stats.tab
+
+cosmo.counts.tab: example.fa
+	../cosmo.py -p $(JPWMS) -fa $<
+
+cosmo.counts.bed: example.fa
+	../cosmo.py -C -p $(JPWMS) -fa $<
+
+bgscans = $(shell echo cosmo.counts.tab.{1..$(SCANS)})
+stats.tab: $(bgscans)
+	../cosmostats.py -N $(SCANS)
+
+cosmo.counts.tab.%: example.fa
+	../cosmo.py -p $(JPWMS) -fa $< -N $*
+
+example.fa:
+	gunzip -dc $@.gz > $@
+
+
+##
+##  internals you can safely ignore
+##
+define AUTOGEN_HELP_BASH
+	declare -A targets; declare -a torder
+	targetre='^([A-Za-z]+):.* *# *(.*)'
+	if [[ $$TERM && $$TERM != dumb && -t 1 ]]; then
+		ul=$$'\e[0;4m'; bbold=$$'\e[34;1m'; reset=$$'\e[0m'
+	fi
+	if [[ -n "$(TITLE)" ]]; then
+		printf "\n  %sMakefile targets - $(TITLE)" "$$ul"
+		[[ -n "$(VERSION)" ]] && printf " v$(VERSION)"
+		printf "%s\n\n" "$$reset"
+	else
+		printf "\n  %sMakefile targets%s\n\n" "$$ul" "$$reset"
+	fi
+	while read -r line; do
+		if [[ $$line =~ $$targetre ]]; then
+			target=$${BASH_REMATCH[1]}; help=$${BASH_REMATCH[2]}
+			torder+=("$$target")
+			targets[$$target]=$$help
+			if (( $${#target} > max )); then max=$${#target}; fi
+		fi
+	done
+	for t in "$${torder[@]}"; do
+		printf "    %smake %-*s%s   %s\n" "$$bbold" $$max "$$t" "$$reset" \
+		       "$${targets[$$t]}"
+	done
+	printf "\n"
+endef
+export AUTOGEN_HELP_BASH

@@ -2,6 +2,10 @@
 .*sw?
 *~
 
+# autoenv, direnv config files (create these locally to suit your liking)
+.autoenv
+.env
+
 # intermediate data files
 *.fa
 *.tab*

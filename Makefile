@@ -1,33 +1,58 @@
 TITLE = COSMO tasks
-VERSION = 0.1
+VERSION = 1.0
 HOMEPAGE = https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo
 LOGDIR = log
 SHELL = bash
 # this might be 'python2' on some systems like Ubuntu LTS; if that's the case,
 # it's best to just create a virtualenv using that Python, then activate it
-PYTHON = python2
-PYTHONVER := $(shell $(PYTHON) -c 'import sys; print("%d.%d.%d" % (sys.version_info.major, sys.version_info.minor, sys.version_info.micro))')
+PYTHON = python
 VIRTUALENV = venv
+# how many dinuc-shuffled scans to run; specify in the environment to override
+BGSCANS = 3
 
 help:  # prints this help
 	@$(PYTHON) -c "$$AUTOGEN_HELP_PY" "$(firstword $(MAKEFILE_LIST))"
 
 moods: have-cloned-moods-submodule moods-python # build MOODS 1.0.2.1 Python module
 
-test: cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite with 5 background scans
-	for f in $^; do \
-		diff $$f test/data/$$f || exit 1; \
-	done
-	@read -p $$'\nClean results from test run now? [Y/n] '; \
-	if [[ -z $$REPLY || $$REPLY =~ [^Yy] ]]; then \
-		make reallyclean || exit 1; \
+test: cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite
+	@for f in $^; do \
+		echo "$(INFO) Testing $$f vs. examples/output/$$f…" >&2; \
+		( set -o pipefail; diff $$f examples/output/$$f | head ); \
+		if (( $$? != 0 )); then \
+			echo "$(WARN) $$f verification test failed." >&2; \
+			failed=$$(( failed + 1 )); \
+		fi; \
+	done; \
+	if (( failed )); then exit 1; fi
+	
+	@read -p $$'\nClean results from test run now? [y/N] '; \
+	if [[ -z $$REPLY || $$REPLY =~ ^[Nn] ]]; then \
+		echo -e "\nOK, preserving outputs from test run."; \
+		echo -e "Run 'make reallyclean' to clean them up later.\n"; \
 	else \
-		echo -e "\nOK, preserving outputs from test run"; \
-		echo -e "Run $(BLD)make reallyclean$(RST) to clean them up later\n"; \
+		make reallyclean || exit 1; \
 	fi
 
-cosmo.coords.bed cosmo.counts.tab stats.tab:
-	BGSCANS=1 ./example.sh
+EXAMPLEFASTA = examples/example.40k.fa
+cosmo.coords.bed: $(EXAMPLEFASTA)
+	./cosmo.py -p examples/jpwm -fa $< -C
+
+cosmo.counts.tab: $(EXAMPLEFASTA)
+	./cosmo.py -p examples/jpwm -fa $<
+
+bgscans = $(shell echo cosmo.counts.tab.{1..$(BGSCANS)})
+stats.tab: cosmo.counts.tab $(bgscans)
+	./cosmostats.py -N $(BGSCANS) > $@
+
+# for testing only; RANDSEED is incremented by the shuffle run number,
+# otherwise the counts from each of the background scans will be the same
+RANDSEED = 1000
+cosmo.counts.tab.%: $(EXAMPLEFASTA)
+	./cosmo.py -p examples/jpwm -fa $< -N $* --random-seed $$(( $(RANDSEED) + $* ))
+
+examples/example%.fa:
+	gunzip -dc $@.gz > $@
 
 have-cloned-moods-submodule:
 	@echo
@@ -52,13 +77,23 @@ moods-python: have-python-27 have-pip have-python-venv moods-lib
 		echo; \
 	fi
 
+pyver := $(shell $(PYTHON) -c 'import sys; print("%d.%d.%d" % (sys.version_info.major, sys.version_info.minor, sys.version_info.micro))')
+
 have-python-27:
 	@echo
 	# $(BLD)Checking for Python 2.7.x...$(RST)
-	@if [[ "$(PYTHONVER)" == 2.7.* ]]; then \
-		echo "$(INFO) Found Python v$(PYTHONVER)" >&2; \
+	@if [[ "$(pyver)" == 2.7.* ]]; then \
+		echo "$(INFO) Found Python v$(pyver)" >&2; \
 	else \
+		echo >&2; \
 		echo "$(ERROR) Python interpreter missing or not required version 2.7.x." >&2; \
+		echo >&2; \
+		echo "Create and activate a virtualenv with your system's Python 2.7, e.g.:" >&2; \
+		echo >&2; \
+		echo "    python2 -m virtualenv venv" >&2; \
+		echo >&2; \
+		echo "then run this make target again." >&2; \
+		echo >&2; \
 		exit 1; \
 	fi
 
@@ -92,16 +127,19 @@ logdir:
 
 clean: # remove build/runtime logs
 	-rm -f log/*.log log/*.err
+	-rm -f examples/log/*.log examples/log/*.err
+	-rmdir log examples/log
 
 reallyclean: clean # clean + remove COSMO output data (*.bed, *.tab*)
 	-rm -f *.bed *.tab*
+	-rm -f examples/*.bed examples/*.tab*
 
 distclean: reallyclean  # reallyclean + remove venv, MOODS build, and uncompressed FASTA
 	-cd MOODS/src && make clean
 	-rm -rf MOODS/python/build
 	-find MOODS -name "*.[oa]" -delete
 	-rm -rf venv
-	-rm example.fa
+	-rm examples/example*.fa
 	@echo >&2; \
 	echo "$(NOTE) Run 'deactivate' to deactivate the Python virtualenv." >&2
 
@@ -131,6 +169,7 @@ ifneq ($(strip $(TERM)),)
 endif
 
 ERROR := [$(ERR)ERROR$(RST)]
+WARN := [$(WRN)WARNING$(RST)]
 HINT := [$(MAG)$(BLD)HINT$(RST)]
 NOTE := [$(WRN)NOTE$(RST)]
 INFO := [$(CYA)INFO$(RST)]
