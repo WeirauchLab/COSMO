@@ -10,7 +10,7 @@ import os
 from setuptools import setup, find_packages
 
 PROJECT_NAME = 'cosmo'
-VERSION = '1.1.0'
+VERSION = '1.1.2'
 PROJECTHOME = 'https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo'
 
 # read and reformat a file suitable for 'long_description'

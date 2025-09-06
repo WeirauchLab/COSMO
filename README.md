@@ -262,6 +262,19 @@ The output `stats.tab` is tab-delimited, and may be viewed in the terminal,
 _e.g._, with `column -t`, or opened in a spreadsheet program such as Excel,
 Google Sheets, or LibreOffice.
 
+### Defining a system-wide path to the PWM files
+
+If you define an [environment variable][envvar] named `COSMO_PWMDIR`, it
+becomes the default for the `-p` / `--pwmdir` option. Typically, this would be
+an absolute path starting at `/`, but you can get creative.
+
+This can be useful, for example, when used with [Environment Modules][modules],
+to define a system-wide directory containing the JASPAR matrices for all users.
+
+This variable can also be defined in your login scripts, _e.g._ your
+`~/.bash_profile` or `~/.profile`; note that the variable set by a `setenv`
+statment in a [modulefile][] would still take precendence in that case.
+
 
 ## DEVELOPMENT AND TESTING
 
@@ -338,6 +351,8 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [ke]: kevin.ernst@cchmc.org
 [mw]: matthew.weirauch@cchmc.org
 [moodscopy]: https://github.com/jhkorhonen/MOODS/blob/master/COPYING.GPLv3
+[envvar]: https://en.wikipedia.org/wiki/Environment_variable
+[modulefile]: https://modules.sourceforge.net/c/modulefile.html
 [semver.org]: https://semver.org
 [issue5]: https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo/-/issues/5
 [issue7]: https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo/-/issues/7
