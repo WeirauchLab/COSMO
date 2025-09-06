@@ -1,4 +1,4 @@
-# COSMO v1.0
+# COSMO - Composite Motif Scanner
 
 This script allows detection of enriched composite motifs in genomic sequence
 data.
@@ -36,13 +36,12 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
       the [TROUBLESHOOTING](#troubleshooting) section for instructions on
       downloading and building MOODS from source
 
-2. If you have Docker:
+1. If you have Docker:
 
-    docker run --rm -it -v .:/src cosmo
-    docker run --rm -it -v .:/src cosmo make -j4 test
+        docker run --rm -it -v .:/src cosmo
+        docker run --rm -it -v .:/src cosmo make -j4 test
 
-
-2. If you want to use a local Python installation instead, create a Python 2.7
+1. If you want to use a local Python installation instead, create a Python 2.7
    [virtualenv][], activate it, and install any necessary dependencies:
 
         # in the 'cosmo' subdirectory from 'git clone' above
@@ -58,13 +57,13 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
    Modules), you probably know what to do on your own. If you have trouble with
    this step, try the Docker method described [below](#development-and-testing).
 
-2. Next, build the MOODS C library and install the Python module into the
+1. Next, build the MOODS C library and install the Python module into the
    virtualenv:
 
         # in the 'cosmo' subdirectory from 'git clone' above
         make moods
 
-3. Finally, to make sure everything works, you run the `make test` target in
+1. Finally, to make sure everything works, you run the `make test` target in
    the included [`Makefile`](Makefile) (assumes a Unix environment):
 
         make test -j4  # run parallel tasks on up to 4 CPU cores
@@ -187,7 +186,6 @@ have the MOODS submodule. Do this:
         make moods
     else
         echo "Oops, this isn't a Git repository." >&2
-        echo "See \"TROUBLESHOOTING\" in 'README.md'." >&2
     fi
 
 When you are reminded, run `source venv/bin/activate` to switch on the Python
@@ -289,10 +287,10 @@ If you're changing the code, make sure `make test` passes, or at least you can
 figure out the reason _why_ it didn't pass (explain this in your commit
 message), _before_ committing to the master/main branch.
 
-For breaking changes —­_e.g._ removing a command-line option or changing the
+For breaking changes — _e.g._ removing a command-line option or changing the
 input or output formats in a non-backward-compatible way — then you must:
 
-1. increment the whole number (major) part of the version in the `Makefile`xi
+1. increment the whole number (major) part of the version in `setup.py`
 2. …and `git tag vX.Y.Z`, where `X.Y.Z` is the new version number.
 
 See [semver.org][] for more information.
@@ -302,11 +300,11 @@ See [semver.org][] for more information.
 
 1. FASTA inputs must have headers in `chrN:<start>-<end>` format, where `N` is
    the chromosome number; the nucleotide sequences must also be on a single line.
-  * see [GitLab issue #5][issue5]
+    * see [GitLab issue #5][issue5]
 2. Given FASTA inputs above about 100 MB, COSMO takes a long time to finish;
    see [GitLab issue #7][issue7].
-  * As a, workaround split large FASTAs into multiple files before the `>`
-    sequence header lines and concatenate the results from COSMO.
+    * As a workaround split large FASTAs into multiple files before the `>`
+      sequence header lines and concatenate the results from COSMO.
 
 
 ## CONTRIBUTORS
@@ -338,6 +336,7 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [pip]: https://pip.pypa.io/en/stable/installing/
 [jr]: mailto:riddeljr@mail.uc.edu
 [ke]: kevin.ernst@cchmc.org
+[mw]: matthew.weirauch@cchmc.org
 [moodscopy]: https://github.com/jhkorhonen/MOODS/blob/master/COPYING.GPLv3
 [semver.org]: https://semver.org
 [issue5]: https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo/-/issues/5
