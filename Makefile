@@ -15,6 +15,9 @@ help:  # prints this help
 
 moods: have-cloned-moods-submodule moods-python # build MOODS 1.0.2.1 Python module
 
+# define (and export) CLEAN=1 in the environment or pass it on the `make`
+# command line to *not* ask to clean up test results; instead, just do it
+export CLEAN
 test: cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite
 	@for f in $^; do \
 		echo "$(INFO) Testing $$f vs. examples/output/$$f…" >&2; \
@@ -26,13 +29,15 @@ test: cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite
 	done; \
 	if (( failed )); then exit 1; fi
 	
-	@read -p $$'\nClean results from test run now? [y/N] '; \
-	if [[ -z $$REPLY || $$REPLY =~ ^[Nn] ]]; then \
+	@if [[ -z $$CLEAN ]]; then \
+		read -p $$'\nClean results from test run now? [y/N] ' CLEAN; \
+	fi; \
+	if [[ -z $$CLEAN || $$CLEAN =~ ^[Nn] ]]; then \
 		echo -e "\nOK, preserving outputs from test run."; \
 		echo -e "Run 'make reallyclean' to clean them up later.\n"; \
 	else \
 		make reallyclean || exit 1; \
-	fi
+	fi; \
 
 EXAMPLEFASTA = examples/example.40k.fa
 cosmo.coords.bed: $(EXAMPLEFASTA)

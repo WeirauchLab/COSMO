@@ -53,6 +53,17 @@ The [`cosmo.py`](cosmo.py) script does the actual scanning of the FASTA, and
 [`cosmostats.py`](cosmostats.py) compiles summary statistics into a file
 named `stats.tab` in your current working directory.
 
+| Option     | Description
+|------------|------------------------------------------------------------
+| `-fa PATH` | path to FASTA sequence file
+| `-t`       | log-odds score threshold (S/Smax) (default is `0.6`)
+| `-P`       | (_optional_) pseudocount for MOODS to use (default is `1`)
+| `-p PATH`  | path to JASPAR-format PWMs (default is `./jpwm`)
+| `-d`       | maximum allowed distance between motifs (default is `10`)
+| `-s`       | boolean flag to dinucleotide shuffle the input sequence
+| `-N`       | background run number
+| `-C`       | boolean flag to save coordinates rather than counts
+
 ### Outputs
 
 COSMO writes counts for stereopairs to the local directory in the file
@@ -64,17 +75,6 @@ the `-C` option, explained below) are saved into a [BED][]-formatted file
 ### Foreground scan
 
 `cosmo.py` supports the following command-line options:
-
-| Option     | Description
-|------------|------------------------------------------------------------
-| `-fa PATH` | path to FASTA sequence file
-| `-t`       | log-odds score threshold (S/Smax) (default is `0.6`)
-| `-P`       | (_optional_) pseudocount for MOODS to use (default is `1`)
-| `-p PATH`  | path to JASPAR-format PWMs (default is `./jpwm`)
-| `-d`       | maximum allowed distance between motifs (default is `10`)
-| `-s`       | boolean flag to dinucleotide shuffle the input sequence
-| `-N`       | background run number
-| `-C`       | boolean flag to save coordinates rather than counts
 
 Example:
 
@@ -194,28 +194,62 @@ First, unpack the example FASTA file if necessary, and run several background
 scans (in this example, three), specifying the `-C` (save coordinates) option
 with the last one:
 
+    cd examples
     test -f example.fa || gunzip example.fa.gz
 
     # vary these parameters to your liking (see USAGE section, above)
-    defaultargs="-fa example.fa -t 0.6 -d 10 -p ./jpwm"
+    defaultargs="-fa example.fa -t 0.6 -d 10 -p jpwm"
 
-    ./cosmo.py $defaultargs &>1.log &
-    ./cosmo.py $defaultargs &>2.log &
-    ./cosmo.py $defaultargs -C &>3.log &
+    ../cosmo.py $defaultargs &>1.log &
+    ../cosmo.py $defaultargs &>2.log &
+    ../cosmo.py $defaultargs -C &>3.log &
 
 Wait for all the background jobs to finish, then run a coordinates scan, using
 the results from the three background scans (`-N 3`):
 
-    ./cosmo.py $defaultargs -s -N 3
+    ../cosmo.py $defaultargs -s -N 3
 
 Finally, compute statistics for the three scans (`-N 3`) and redirect this
 output into a file named `stats.tab`:
 
-    ./cosmostats.py -N 3 > stats.tab
+    ../cosmostats.py -N 3 > stats.tab
 
 The output `stats.tab` is tab-delimited, and may be viewed in the terminal,
 _e.g._, with `column -t`, or opened in a spreadsheet program such as Excel,
 Google Sheets, or LibreOffice.
+
+
+## DEVELOPMENT &amp; TESTING
+
+You can use the included `Dockerfile` to simplify local development; it builds
+a minimal Debian Linux container with GNU Make and the latest release of Python
+2.7 inside.
+
+To use it, build the image locally, then bind mount the repository to `/src`
+inside the container before running commands inside it. For example:
+
+    docker build . -t cosmo
+
+    # defaults to running `make help` to show Makefile tasks
+    docker run --rm -it -v .:/src cosmo
+
+    # run built-in tests, on 4 CPU cores
+    docker run --rm -it -v .:/src cosmo make -j4 test
+
+    # run COSMO programs directly, using the Python inside the container
+    docker run --rm -it -v .:/src cosmo ./cosmo.py  # or ./cosmostats.py
+
+If you're changing the code, make sure `make test` passes, or at least you can
+figure out the reason _why_ it didn't pass (explain this in your commit
+message), _before_ committing to the master/main branch.
+
+For breaking changes —­_e.g._ removing a command-line option or changing the
+input or output formats in a non-backward-compatible way — then you must:
+
+1. increment the whole number (major) part of the version in the `Makefile`xi
+2. …and `git tag vX.Y.Z`, where `X.Y.Z` is the new version number.
+
+See [semver.org][] for more information.
 
 
 ## CONTRIBUTORS
@@ -246,3 +280,4 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [jr]: mailto:riddeljr@mail.uc.edu
 [ke]: kevin.ernst@cchmc.org
 [moodscopy]: https://github.com/jhkorhonen/MOODS/blob/master/COPYING.GPLv3
+[semver.org]: https://semver.org
