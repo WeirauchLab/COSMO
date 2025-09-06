@@ -9,6 +9,10 @@ PYTHON = python
 VIRTUALENV = venv
 # how many dinuc-shuffled scans to run; specify in the environment to override
 BGSCANS = 3
+# where to 'make install' to
+# see also 'MODULEDESTROOT', 'MODULEFILEDEST', and the 'module:' target, below
+PREFIX = /usr/local
+
 
 help:  # prints this help
 	@$(PYTHON) -c "$$AUTOGEN_HELP_PY" "$(firstword $(MAKEFILE_LIST))"
@@ -76,6 +80,7 @@ have-cloned-moods-submodule:
 # locate a Python library
 pywhich = $(PYTHON) -c 'm = __import__("$(1)", globals(), locals(), [], 0); print m.__file__'
 
+# install moods into the default location, probably the active virtualenv
 moods-python: have-python-27 have-pip have-python-venv moods-lib
 	@echo
 	@if ! $(call pywhich,MOODS) 2>&1 | grep -q $(VIRTUALENV) &>/dev/null; then \
@@ -115,7 +120,8 @@ have-pip:
 		exit 1; \
 	fi
 
-have-python-venv:
+have-python-venv: venv/bin/activate
+venv/bin/activate:
 	@echo
 	# $(BLD)Checking for Python virtualenv (or creating one)...$(RST)
 	@if [[ ! -d $(VIRTUALENV) ]]; then \
@@ -125,15 +131,67 @@ have-python-venv:
 		echo "$(NOTE) Please run `. $(VIRTUALENV)/bin/activate` first, then try again." >&2; \
 	fi
 
-moods-lib:
+moods-lib: MOODS/src/libpssm.a
+MOODS/src/libpssm.a:
 	@echo
 	# $(BLD)Building MOODS C library...$(RST)
 	cd MOODS/src && make
 
-logdir:
+install: have-python-27 moods-lib  # install MOODS and COSMO to /usr/local [override with PREFIX=]
 	@echo
-	# $(BOLD)making sure the log directory exists$(RST)
-	test -d $(LOGDIR) || mkdir -p $(LOGDIR)
+	# installing the MOODS library
+	cd MOODS/python && $(PYTHON) setup.py install --prefix="$(PREFIX)"
+	
+	@# for some reason, PYTHONPATH has to be defined here, but not for MOODS
+	@# I think it's because COSMO installs scripts/entrypoints? ¯\_(ツ)_/¯
+	# installing COSMO itself
+	PYTHONPATH="$(PREFIX)/lib/python2.7/site-packages" python setup.py install --prefix="$(PREFIX)"
+	
+	# copying example PWMs
+	mkdir -p $(PREFIX)/lib/cosmo
+	cp -r examples/jpwm $(PREFIX)/lib/cosmo
+
+# where to install COSMO as a module, and where to put the modulefile
+MODULEDESTROOT = $(if $(LABLOCALMODULES),$(LABLOCALMODULES),$(PREFIX)/modules)
+MODULEFILEDEST = $(MODULEDESTROOT)/modulefiles/cosmo
+# update this as appropriate for your local setup
+MODULEPYTHON27MOD = python/2.7.18-wrl
+MODULEVERSION = $(VERSION)
+MODULEHOMEPAGE = $(HOMEPAGE)
+# set to an empty string to *not* ask to set the new modulefile as the default
+ASKDEFAULTMODULEVER = 1
+
+module: modulefile  # install COSMO as an Environment Modules module
+	@if which $(PYTHON) 2>/dev/null | grep -q $(VIRTUALENV); then \
+		echo -e "\nYou should deactivate the virtualenv before running this step:" >&2; \
+		echo -e "\n    $$ deactivate" >&2; \
+		echo -e "\nThen try running 'make $@' again." >&2; \
+		exit 1; \
+	fi
+	@echo
+	# installing the COSMO modulefile
+	install -m644 modulefile/modulefile.tcl $(MODULEFILEDEST)/$(VERSION)
+
+ifneq ($(ASKDEFAULTMODULEVER),)
+	@read -p $$'\nSet version $(VERSION) as the new default module? [y/N] '; \
+	if [[ $$REPLY =~ ^[Yy] ]]; then \
+		install -m644 modulefile/dot-version.tcl $(MODULEFILEDEST)/.version; \
+		echo; \
+	fi
+endif
+
+	@# installing MOODS and COSMO
+	mkdir -p $(MODULEDESTROOT)/cosmo/$(VERSION)
+	make install PREFIX=$(MODULEDESTROOT)/cosmo/$(VERSION)
+
+# note that this will catch a few of Environment Modules *own* variables, too…
+M4DEFS = $(foreach V,$(filter MODULE%,$(.VARIABLES)),-D $V='$($V)')
+modulefile: modulefile/modulefile.tcl modulefile/dot-version.tcl  # update the Environment Modules modulefile
+modulefile/%: modulefile/%.m4
+	@echo
+	# generating the COSMO Environment Modules modulefile
+	m4 -P $(M4DEFS) $< > $@
+
 
 clean: # remove build/runtime detritus + logs
 	-rm *.pyc

@@ -72,22 +72,21 @@ See [DETAILED INSTALLATION](#detailed-installation) below if you're on Windows,
 or if you have any problems with the instructions above or the running the
 scripts.
 
-
 ### Local installation
 
-Provided you've run the `make moods` target as prescribed above, you can
-install `cosmo.py` and `cosmostats.py` as `cosmo` and `cosmostats`,
-respectively, making them available in your shell's [search path][path]:
+If you are on a Unix/Linux system, run `make install`. The default `PREFIX` is
+`/usr/local`, so you will likely need to become root with `sudo` or similar.
 
-    # use either of these if you create a virtualenv as directed above
-    python setup.py install
-    pip install .
+A simpler option is to install to your home directory:
 
-    # try either of these if the above yields an error about permissions
-    python setup.py install --user
-    pip install --user .
+    make install PREFIX=$HOME/.local
 
-If if this is succesful, you can run `cosmo` or `cosmostats` from any directory
+Most Linux distributions already include `~/.local/bin` in your search path by
+default. You may need to log out and back in again for this to take effect. How
+to update your shell's [search path](path) is beyond the scope of this
+document.
+
+If this is succesful, you can run `cosmo` or `cosmostats` from any directory
 on your filesystem, without needing to specify the relative pathnames like
 `./cosmo.py` in the examples below.
 
@@ -274,6 +273,32 @@ to define a system-wide directory containing the JASPAR matrices for all users.
 This variable can also be defined in your login scripts, _e.g._ your
 `~/.bash_profile` or `~/.profile`; note that the variable set by a `setenv`
 statment in a [modulefile][] would still take precendence in that case.
+
+### Creating an Environment Modules / Lmod module
+
+The short answer is:
+
+    make module
+    
+For members of the Weirauch Lab, this will just do the Right Thing™.
+
+For others, this will install the module to `/usr/local/modules/cosmo/x.y.z`
+(where `x.y.z` is the currently checked-out version of COSMO) and put the
+modulefile in `/usr/local/modules/modulefiles/cosmo/x.y.z`.
+
+For you to be able to `module load cosmo`, you will need to have run `module
+use /usr/local/modules/modulefiles` in your current shell session or login
+scripts, or to have added that to your sitewide configuration files, _e.g._
+`/etc/environment-modules/modulespath` on Debian/Ubuntu systems.
+
+See the definitions of `MODULEDESTROOT` and `MODULEFILEDEST` in [the
+Makefile](Makefile) for customization options. For example, if you have custom
+modules in `~/modules` and modulefiles in `~/modules/modulefiles`, you can:
+
+    make module MODULEDESTROOT=$HOME/modules
+
+Further help with Environment Modules is beyond the scope of this document. See
+its homepage at https://modules.sf.net for more information.
 
 
 ## DEVELOPMENT AND TESTING
