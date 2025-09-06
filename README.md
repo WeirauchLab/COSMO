@@ -33,8 +33,8 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
 
     * as an alternative, download the [latest release tarball][targz]
       ([.zip][zip]) from GitLab, then unpack it into a local directory; see
-      the [TROUBLESHOOTING](#troubleshooting) section for instructions on
-      downloading and building MOODS from source
+      the [DETAILED INSTALLATION](#detailed-installation) section for
+      instructions on downloading and building MOODS from source
 
 1. If you have Docker:
 
