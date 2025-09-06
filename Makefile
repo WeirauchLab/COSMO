@@ -48,7 +48,7 @@ cosmo.counts.tab: $(EXAMPLEFASTA)
 
 bgscans = $(shell echo cosmo.counts.tab.{1..$(BGSCANS)})
 stats.tab: cosmo.counts.tab $(bgscans)
-	./cosmostats.py -N $(BGSCANS) > $@
+	./cosmostats.py > $@
 	@if [[ ! -s $@ ]]; then \
 		echo "$(ERROR) Output file '$@' was empty. Can't continue." >&2; \
 		rm $@; \

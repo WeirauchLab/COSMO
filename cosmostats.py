@@ -15,6 +15,7 @@
 from __future__ import print_function
 import os
 import sys
+import glob
 import math
 import argparse
 import numpy as np
@@ -25,12 +26,33 @@ COUNTSFILE = 'cosmo.counts.tab'
 DEFAULT_NUMBER = 1
 DEBUG = os.getenv('DEBUG')
 
-parser = argparse.ArgumentParser(description='COSMOS Composite Motif Scanner v2')
-parser.add_argument('-N', '--number', type=int, required=True,
-                    dest='shuffle_number', help='number of bg scans')
+parser = argparse.ArgumentParser(description='COSMO Composite Motif Scanner - '
+                                             'background scan statisticalizer')
+parser.add_argument('-N', '--number', type=int, dest='shuffle_number',
+                    metavar='BGSCANS',
+                    help='number of background scans (default: autodetected '
+                         'from filesystem)')
 
 args = parser.parse_args()
 result_dict = dd(list)
+
+# if not specified, detect # of bg scans from comso.counts.tab's on filesystem
+bgscans = glob.glob(COUNTSFILE + ".*")
+nscans = len(bgscans)
+
+if args.shuffle_number:
+    if args.shuffle_number != nscans:
+        print("WARNING: '-N' / '--number' given as %d, but %d backgrounds scans "
+              "were found." % (args.shuffle_number, nscans), file=sys.stderr)
+else:
+    if sum([int(x.replace(COUNTSFILE + '.', '')) for x in bgscans]) \
+            != sum(range(1, nscans + 1)):
+        print("ERROR: Background scan filenames must have sequential suffixes, "
+              "e.g., 1, 2, 3, …", file=sys.stderr)
+        sys.exit(1)
+    print("Inferred %d background scans from files found in current directory."
+          % nscans, file=sys.stderr)
+    args.shuffle_number = nscans
 
 # build the results dictionary from the (unshuffled) counts file
 with open(COUNTSFILE, 'r') as f:
