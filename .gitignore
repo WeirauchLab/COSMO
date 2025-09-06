@@ -12,6 +12,8 @@
 *.bed
 *.log
 *.err
+!examples/output/*.tab*
+!examples/output/*.bed
 
 # subdirectories that can be recreated
 log/**

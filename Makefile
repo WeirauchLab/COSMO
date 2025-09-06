@@ -1,5 +1,5 @@
 TITLE = COSMO tasks
-VERSION = 1.0
+VERSION = 1.0.1
 HOMEPAGE = https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo
 LOGDIR = log
 SHELL = bash

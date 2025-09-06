@@ -59,22 +59,24 @@ for i in range(1, args.shuffle_number + 1):
 print('\t'.join(["TF1|TF2|{F/R}|D", "COUNTS", "n", "mu", "SD", "FC", "Z",
                  "p-value"]))
 
-scores = []
-score_list = []
 for key in result_dict:
     scores = result_dict[key]
-    xbar = float(scores[0])
-    bg_list = list(map(float, scores[1:]))
-    n = float(len(bg_list))
-    mu = float(np.mean(bg_list))
+    xbar = scores[0]
+    bg_list = scores[1:]
+    n = len(bg_list)
+
+    mu = np.mean(bg_list)
     if mu == 0.0:
         mu = 1.0
-    sd = float(np.std(bg_list, ddof=1))
+
+    sd = np.std(bg_list, ddof=1)
     if sd == 0.0:
         sd = 1.0
-    fc = float(xbar / mu)
-    z = float((xbar - mu) / sd)
-    p = float(2 * norm.cdf(-np.abs(z)))
+
+    fc = xbar / mu
+    z = (xbar - mu) / sd
+    p = 2 * norm.cdf(-np.abs(z))
+
     print('\t'.join([
         key,
         str(int(xbar)),
