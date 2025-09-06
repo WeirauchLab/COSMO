@@ -15,7 +15,8 @@
 !examples/output/*.tab*
 !examples/output/*.bed
 
-# Python setuptools stuff
+# Python detritus
+*.pyc
 build/**
 *.egg-info/**
 dist/**

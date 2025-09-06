@@ -1,6 +1,6 @@
 TITLE = COSMO tasks
 VERSION = $(shell sed -n "s/.*VERSION *= *['\"]\(.*\)['\"].*/\1/p" setup.py)
-HOMEPAGE = https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo
+HOMEPAGE = $(shell sed -n "s/.*PROJECTHOME *= *['\"]\(.*\)['\"].*/\1/p" setup.py)
 LOGDIR = log
 SHELL = bash
 # this might be 'python2' on some systems like Ubuntu LTS; if that's the case,
@@ -135,20 +135,22 @@ logdir:
 	# $(BOLD)making sure the log directory exists$(RST)
 	test -d $(LOGDIR) || mkdir -p $(LOGDIR)
 
-clean: # remove build/runtime logs
-	-rm -f log/*.log log/*.err
-	-rm -f examples/log/*.log examples/log/*.err
+clean: # remove build/runtime detritus + logs
+	-rm *.pyc
+	-rm log/*.log log/*.err
+	-rm examples/log/*.log examples/log/*.err
 	-rmdir log examples/log
+	-rm -r build dist *.egg-info
 
 reallyclean: clean # clean + remove COSMO output data (*.bed, *.tab*)
-	-rm -f *.bed *.tab*
-	-rm -f examples/*.bed examples/*.tab*
+	-rm *.bed *.tab*
+	-rm examples/*.bed examples/*.tab*
 
 distclean: reallyclean  # reallyclean + remove venv, MOODS build, and uncompressed FASTA
 	-cd MOODS/src && make clean
-	-rm -rf MOODS/python/build
+	-rm -r MOODS/python/build
 	-find MOODS -name "*.[oa]" -delete
-	-rm -rf venv
+	-rm -r venv
 	-rm examples/example*.fa
 	@echo >&2; \
 	echo "$(NOTE) Run 'deactivate' to deactivate the Python virtualenv." >&2
