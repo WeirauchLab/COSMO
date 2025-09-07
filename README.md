@@ -34,35 +34,41 @@ Modules][modules]) should handle this for you.
       [DETAILED INSTALLATION](#detailed-installation) section for instructions
       on downloading and building MOODS from source
 
-1. If you have Docker:
+2. If you have Docker:
 
-        docker run --rm -it -v .:/src cosmo
+        docker build . -t cosmo  # be patient, builds Python 2.7 from source!
+        docker run --rm -it cosmo cosmo --help
+        docker run --rm -it cosmo cosmostats --help
         docker run --rm -it -v .:/src cosmo make -j4 test
 
-1. If you want to use a local Python installation instead, make sure you have a
+    This method requires the least amount of work on _your_ part, but it's the
+    least tested. Use a bind mount (`-v` switch) if you want access to the
+    sample data from the repository to run `make test` inside the container.
+
+3. If you want to use a local Python installation instead, make sure you have a
    version of `pip` that works with Python 2.7:
 
         wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
         python get-pip.py
 
-   Use pip to install [virtualenv][] if necessary, then create a Python 2.7
-   virtual environment and activate it:
+    Use pip to install [virtualenv][] if necessary, then create a Python 2.7
+    virtual environment and activate it:
 
         # in the 'cosmo' subdirectory from 'git clone' above
         python -m virtualenv venv
         . venv/bin/activate
         
-   If you have some other Python 2.7 environment (such as Conda or Environment
-   Modules), you probably know what to do on your own. If you have trouble with
-   this step, try the Docker method described [below](#development-and-testing).
+    If you have some other Python 2.7 environment (such as Conda or Environment
+    Modules), you probably know what to do on your own. If you have trouble with
+    this step, try the Docker method described [below](#development-and-testing).
 
-1. Next, build the MOODS C library and install the Python module dependencies
+4. Next, build the MOODS C library and install the Python module dependencies
    into the virtualenv:
 
         # in the 'cosmo' subdirectory from 'git clone' above
         make deps
 
-1. Finally, to make sure everything works, you run the `make test` target in
+5. Finally, to make sure everything works, you run the `make test` target in
    the included [`Makefile`](Makefile) (assumes a Unix environment):
 
         make test -j4  # run parallel tasks on up to 4 CPU cores
@@ -289,7 +295,9 @@ The short answer is:
 
     make module
     
-For members of the Weirauch Lab, this will just do the Right Thing™.
+For members of the Weirauch Lab, this will just do the Right Thing™. To avoid
+errors here, purge all your modules, deactivate any virtualenvs, and re-load
+`python/2.7.18-wrl` or a comparable Python 2.7.x  module.
 
 For others, this will install the module to `/usr/local/modules/cosmo/x.y.z`
 (where `x.y.z` is the currently checked-out version of COSMO) and put the
@@ -321,14 +329,12 @@ inside the container before running commands inside it. For example:
 
     docker build . -t cosmo
 
-    # defaults to running `make help` to show Makefile tasks
-    docker run --rm -it -v .:/src cosmo
+    # make sure it works
+    docker run --rm -it cosmo cosmo --help
+    docker run --rm -it cosmo cosmostats --help
 
-    # run built-in tests, on 4 CPU cores
+    # run tests on sample data included with repository, on 4 CPU cores
     docker run --rm -it -v .:/src cosmo make -j4 test
-
-    # run COSMO programs directly, using the Python inside the container
-    docker run --rm -it -v .:/src cosmo ./cosmo.py  # or ./cosmostats.py
 
 If you're changing the code, make sure `make test` passes, or at least you can
 figure out the reason _why_ it didn't pass (explain this in your commit

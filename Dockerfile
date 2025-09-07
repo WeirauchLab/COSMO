@@ -9,7 +9,7 @@ ENV BUILD_PACKAGES="build-essential wget git ca-certificates zlib1g-dev libssl-d
 RUN apt-get update
 RUN apt-get install -y --no-install-recommends $BUILD_PACKAGES
 # mark as "manually installed" so it isn't autoremoved later
-RUN apt-get install -y --no-install-recommends make
+RUN apt-get install -y --no-install-recommends make less vim-tiny
 
 WORKDIR /usr/src
 RUN wget --no-verbose https://www.python.org/ftp/python/$PYVER/Python-$PYVER.tgz
@@ -27,6 +27,9 @@ RUN make -j8 && make install
 RUN wget --no-verbose https://bootstrap.pypa.io/pip/2.7/get-pip.py
 RUN python get-pip.py
 
+# the rest of these are all things that `make install` would do for you,
+# *outside* the container
+WORKDIR /usr/src
 RUN git clone https://github.com/jhkorhonen/MOODS.git
 WORKDIR MOODS
 RUN git checkout de2a2a8
@@ -35,13 +38,25 @@ RUN make -j8
 WORKDIR ../python
 RUN python setup.py install
 
-COPY requirements.txt .
-RUN pip install -r requirements.txt
+WORKDIR /usr/src
+COPY README.md requirements.txt Makefile setup.py cosmo.py cosmostats.py ./
+RUN python setup.py install
+
+WORKDIR /usr/local/bin
+RUN ln -s cosmo.py cosmo
+RUN ln -s cosmostats.py cosmostats
 
 RUN rm -r /usr/src
 RUN apt-get remove -y $BUILD_PACKAGES && \
     apt-get autoremove -y && \
     apt-get clean -y
 
+COPY examples/jpwm /usr/local/cosmo/jpwm
+
+# this will probably match the local user, 1000:1000, avoiding problems with
+# files created by root within the container
+RUN useradd -m cosmo
+USER cosmo
+RUN echo 'export COSMO_PWMDIR=/usr/local/lib/cosmo/jpwm' >> ~/.bashrc
+
 WORKDIR /src
-CMD ["make"]
