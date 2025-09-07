@@ -146,6 +146,11 @@ install: have-python-27 moods-lib  # install MOODS and COSMO to /usr/local [over
 	@# I think it's because COSMO installs scripts/entrypoints? ¯\_(ツ)_/¯
 	# installing COSMO itself
 	PYTHONPATH="$(PREFIX)/lib/python2.7/site-packages" python setup.py install --prefix="$(PREFIX)"
+
+	# symlink 'cosmo' to 'cosmo.py' and likewise for 'cosmostats.py'
+	cd $(PREFIX)/bin && \
+	ln -sf cosmo.py cosmo && \
+	ln -sf cosmostats.py cosmostats
 	
 	# copying example PWMs
 	mkdir -p $(PREFIX)/lib/cosmo

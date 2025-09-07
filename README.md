@@ -68,9 +68,8 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
 
         make test -j4  # run parallel tasks on up to 4 CPU cores
 
-See [DETAILED INSTALLATION](#detailed-installation) below if you're on Windows,
-or if you have any problems with the instructions above or the running the
-scripts.
+See [DETAILED INSTALLATION](#detailed-installation) below if you have any
+problems with the instructions above or the running the scripts.
 
 ### Local installation
 
@@ -83,12 +82,17 @@ A simpler option is to install to your home directory:
 
 Most Linux distributions already include `~/.local/bin` in your search path by
 default. You may need to log out and back in again for this to take effect. How
-to update your shell's [search path](path) is beyond the scope of this
+to update your shell's [search path][path] is beyond the scope of this
 document.
 
 If this is succesful, you can run `cosmo` or `cosmostats` from any directory
 on your filesystem, without needing to specify the relative pathnames like
 `./cosmo.py` in the examples below.
+
+Windows is not currently supported by [the method we presently use in our
+`setup.py`][scripts]. However, if you have success building MOODS on Windows
+and would like to have a go at getting COSMO working, too, a patch or pull
+request would be welcome.
 
 
 ## USAGE
@@ -363,6 +367,7 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [`LICENSE.txt`](LICENSE.txt) for details.
 
 [path]: https://en.wikipedia.org/wiki/PATH_(variable)
+[scripts]: https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#scripts
 [moods]: https://www.cs.helsinki.fi/group/pssmfind/
 [bedtools]: http://bedtools.readthedocs.io/en/latest/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/user_guide.html
