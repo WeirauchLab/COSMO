@@ -26,7 +26,7 @@ test: cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite on C
 	# testing COSMO outputs to examples/output/*
 	@for f in $(filter-out deps,$^); do \
 		if [[ ! -s $$f ]]; then \
-			echo -e "\n$(ERROR) $$f is empty! Try 'make reallyclean' to start over.\n" >&2; \
+			echo -e "\n$(ERROR) $$f is empty! Try 'make clean' to start over.\n" >&2; \
 			exit 1; \
 		fi; \
 		echo -e "$(INFO) $$f vs. examples/output/$$f…" >&2; \
@@ -41,11 +41,11 @@ test: cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite on C
 	@if [[ -z $$CLEAN ]]; then \
 		read -p $$'\nClean results from test run now? [y/N] ' CLEAN; \
 	fi; \
-	if [[ -z $$CLEAN || $$CLEAN =~ ^[Nn] ]]; then \
-		echo -e "\nOK, preserving outputs from test run."; \
-		echo -e "Run 'make reallyclean' to clean them up later.\n"; \
+	if [[ $$CLEAN =~ ^[Yy] ]]; then \
+		make clean || exit 1; \
 	else \
-		make reallyclean || exit 1; \
+		echo -e "\nOK, preserving outputs from test run."; \
+		echo -e "Run 'make clean' to clean them up later.\n"; \
 	fi; \
 
 EXAMPLEFASTA = examples/example.40k.fa
@@ -192,24 +192,18 @@ modulefile/%: modulefile/%.m4
 	m4 -P $(M4DEFS) $< > $@
 
 
-clean: # [clean] remove build/runtime detritus + logs
-	-rm log/*.log log/*.err
-	-rm examples/log/*.log examples/log/*.err
-	-rmdir log examples/log
-
-reallyclean: clean # [clean] clean + remove COSMO output data (*.bed, *.tab*)
+clean: # [clean] remove COSMO output data (*.bed, *.tab*, *.fa)
 	-rm *.bed *.tab*
 	-rm examples/*.bed examples/*.tab*
+	-rm examples/example*.fa
 
-distclean: reallyclean  # [clean] reallyclean + clean MOODS, remove uncompressed FASTAs
+distclean: clean  # [clean] clean + remove intermediate build artifacts
 	-cd MOODS/src && make clean
 	-rm -r MOODS/python/build
-	-find MOODS -name "*.[oa]" -delete
-	-rm examples/example*.fa
-	-rm *.pyc
 	-rm -r build dist *.egg-info
+	-find . -name "*.pyc" -delete
 
-envclean: distclean  # [clean] distclean + remove the virtualenv
+envclean: # [clean] remove the virtualenv (assuming you named it 'venv')
 	-rm -r venv
 	@echo >&2; \
 	echo "$(NOTE) Run 'deactivate' to deactivate the Python virtualenv." >&2
