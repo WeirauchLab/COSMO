@@ -73,8 +73,15 @@ problems with the instructions above or the running the scripts.
 
 ### Local installation
 
-If you are on a Unix/Linux system, run `make install`. The default `PREFIX` is
-`/usr/local`, so you will likely need to become root with `sudo` or similar.
+If you have MOODS and [COSMO's dependencies](requirements.txt) already
+installed, you can just copy `cosmo.py` and `cosmostats.py` to a directory in
+your shell's [search path][path] and call it good. However there's an `install`
+target in the included [Makefile](Makefile) that will handle the details for
+you.
+
+If you are on a Unix/Linux system, run `make install`. The default installation
+prefix is `/usr/local` (with scripts being installed to `/usr/local/bin`), so
+you will likely need to become root with `sudo` or similar.
 
 A simpler option is to install to your home directory:
 
@@ -82,8 +89,7 @@ A simpler option is to install to your home directory:
 
 Most Linux distributions already include `~/.local/bin` in your search path by
 default. You may need to log out and back in again for this to take effect. How
-to update your shell's [search path][path] is beyond the scope of this
-document.
+to update your shell's `PATH` variable is beyond the scope here.
 
 If this is succesful, you can run `cosmo` or `cosmostats` from any directory
 on your filesystem, without needing to specify the relative pathnames like
