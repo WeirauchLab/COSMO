@@ -13,7 +13,7 @@ BGSCANS = 3
 PREFIX = /usr/local
 
 
-help:  # prints this help
+help:  # print this help
 	@$(PYTHON) -c "$$AUTOGEN_HELP_PY" "$(firstword $(MAKEFILE_LIST))"
 
 moods: have-cloned-moods-submodule moods-python # build MOODS 1.0.2.1 Python module
@@ -21,7 +21,7 @@ moods: have-cloned-moods-submodule moods-python # build MOODS 1.0.2.1 Python mod
 # define (and export) CLEAN=1 in the environment or pass it on the `make`
 # command line to *not* ask to clean up test results; instead, just do it
 export CLEAN
-test: deps cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite
+test: deps cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite on COSMO
 	@echo
 	# testing COSMO outputs to examples/output/*
 	@for f in $(filter-out deps,$^); do \
@@ -130,7 +130,7 @@ MOODS/src/libpssm.a:
 	# $(BLD)Building MOODS C library...$(RST)
 	cd MOODS/src && make
 
-install: have-python-27 moods-lib  # install MOODS and COSMO to /usr/local [override with PREFIX=]
+install: have-python-27 moods-lib  # [install] install MOODS and COSMO to /usr/local [override with PREFIX=]
 	@echo
 	# installing the MOODS library
 	cd MOODS/python && $(PYTHON) setup.py install --prefix="$(PREFIX)"
@@ -159,7 +159,7 @@ MODULEHOMEPAGE = $(HOMEPAGE)
 # set to an empty string to *not* ask to set the new modulefile as the default
 ASKDEFAULTMODULEVER = 1
 
-module: modulefile  # install COSMO as an Environment Modules module
+module: modulefile  # [install] install COSMO as an Environment Modules module
 	@# dummy check, because I would tend to do this…
 	@if which $(PYTHON) 2>/dev/null | grep -qE 'v?env/bin'; then \
 		echo -e "\nYou should deactivate the virtualenv before running this step:" >&2; \
@@ -192,23 +192,25 @@ modulefile/%: modulefile/%.m4
 	m4 -P $(M4DEFS) $< > $@
 
 
-clean: # remove build/runtime detritus + logs
-	-rm *.pyc
+clean: # [clean] remove build/runtime detritus + logs
 	-rm log/*.log log/*.err
 	-rm examples/log/*.log examples/log/*.err
 	-rmdir log examples/log
-	-rm -r build dist *.egg-info
 
-reallyclean: clean # clean + remove COSMO output data (*.bed, *.tab*)
+reallyclean: clean # [clean] clean + remove COSMO output data (*.bed, *.tab*)
 	-rm *.bed *.tab*
 	-rm examples/*.bed examples/*.tab*
 
-distclean: reallyclean  # reallyclean + remove venv, MOODS build, and uncompressed FASTA
+distclean: reallyclean  # [clean] reallyclean + clean MOODS, remove uncompressed FASTAs
 	-cd MOODS/src && make clean
 	-rm -r MOODS/python/build
 	-find MOODS -name "*.[oa]" -delete
-	-rm -r venv
 	-rm examples/example*.fa
+	-rm *.pyc
+	-rm -r build dist *.egg-info
+
+envclean: distclean  # [clean] distclean + remove the virtualenv
+	-rm -r venv
 	@echo >&2; \
 	echo "$(NOTE) Run 'deactivate' to deactivate the Python virtualenv." >&2
 
@@ -252,6 +254,7 @@ def esc(code):
 max = 0
 groups = {}
 targets = []
+grouplist = []
 print("\n  %sMakefile targets - %s v%s%s\n" %
 	(esc('0;4'), "$(TITLE)", "$(VERSION)", esc(0)))
 with open(sys.argv[1], 'r') as makefile:
@@ -262,7 +265,9 @@ with open(sys.argv[1], 'r') as makefile:
 			target, group, help = groupmatch.groups()
 			if len(target) > max:
 				max = len(target)
-			if not groups.get(group): groups[group] = []
+			if not groups.get(group):
+				grouplist.append(group)
+				groups[group] = []
 			groups[group].append((target, help))
 		elif match:
 			target, help = match.groups()
@@ -274,7 +279,7 @@ if targets:
 	for t in targets:
 		print(fmt % (esc('1;34'), t[0], esc(0), t[1]))
 if groups:
-	for g in groups:
+	for g in grouplist:
 		print('\n  [%s]' % g)
 		for t in groups[g]:
 			print(fmt % (esc('1;34'), t[0], esc(0), t[1]))
