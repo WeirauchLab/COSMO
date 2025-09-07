@@ -21,7 +21,7 @@ moods: have-cloned-moods-submodule moods-python # build MOODS 1.0.2.1 Python mod
 # define (and export) CLEAN=1 in the environment or pass it on the `make`
 # command line to *not* ask to clean up test results; instead, just do it
 export CLEAN
-test: deps cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite on COSMO
+test: cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite on COSMO
 	@echo
 	# testing COSMO outputs to examples/output/*
 	@for f in $(filter-out deps,$^); do \
