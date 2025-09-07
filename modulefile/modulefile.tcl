@@ -11,10 +11,10 @@ set version "1.1.3"
 set proper "COSMO"
 set descrip "Detects enriched composite motifs in genomic sequence data"
 set homepage "https://github.com/weirauchlab/cosmo"
-set helppage "https://tfwiki.cchmc.org/wiki/COSMO"
-set installpage "https://tfwiki.cchmc.org/wiki/COSMO/Creating_a_%27cosmo%27_module"
+set helppage "https://github.com/weirauchlab/cosmo/#usage"
+set installpage "https://github.com/weirauchlab/cosmo#detailed-installation"
 set bugspage "https://github.com/weirauchlab/cosmo/issues"
-set topdir  "/data/weirauchlab/modules/local/cosmo/$version"
+set topdir  "/usr/local/modules/cosmo/$version"
 
 proc ModulesHelp { } {
     global proper
