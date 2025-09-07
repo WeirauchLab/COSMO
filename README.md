@@ -39,17 +39,19 @@ Modules][modules]) should handle this for you.
         docker run --rm -it -v .:/src cosmo
         docker run --rm -it -v .:/src cosmo make -j4 test
 
-1. If you want to use a local Python installation instead, create a Python 2.7
-   [virtualenv][], activate it, and install any necessary dependencies:
+1. If you want to use a local Python installation instead, make sure you have a
+   version of `pip` that works with Python 2.7:
+
+        wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
+        python get-pip.py
+
+   Use pip to install [virtualenv][] if necessary, then create a Python 2.7
+   virtual environment and activate it:
 
         # in the 'cosmo' subdirectory from 'git clone' above
         python -m virtualenv venv
         . venv/bin/activate
         
-        # if you don't already have a 'pip' for Python 2.7.x
-        wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
-        python get-pip.py
-
    If you have some other Python 2.7 environment (such as Conda or Environment
    Modules), you probably know what to do on your own. If you have trouble with
    this step, try the Docker method described [below](#development-and-testing).
