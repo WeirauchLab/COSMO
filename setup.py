@@ -10,7 +10,7 @@ import os
 from setuptools import setup, find_packages
 
 PROJECT_NAME = 'cosmo'
-VERSION = '1.1.0'
+VERSION = '1.1.3'
 PROJECTHOME = 'https://github.com/weirauchlab/cosmo'
 
 # read and reformat a file suitable for 'long_description'
@@ -124,11 +124,12 @@ if __name__ == '__main__':
         ],
 
         # create an executable in users' PATH for Windows or Unix; reference:
-        # https://setuptools.readthedocs.io/en/latest/setuptools.html#automatic-script-creation
-        entry_points={
-            "console_scripts": [
-                "cosmo = cosmo.py",
-                "cosmostats = cosmostats.py",
-            ],
-        }
+        # https://setuptools.pypa.io/en/latest/userguide/quickstart.html#entry-points-and-automatic-script-creation
+        # TOOD: some day; this doesn't work with "plain" .py scripts, though
+        #entry_points={
+        #    "console_scripts": [
+        #        "cosmo = cosmo:main",
+        #        "cosmostats = cosmostats:main",
+        #    ],
+        #}
     )

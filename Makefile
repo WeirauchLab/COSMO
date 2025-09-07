@@ -6,9 +6,12 @@ SHELL = bash
 # this might be 'python2' on some systems like Ubuntu LTS; if that's the case,
 # it's best to just create a virtualenv using that Python, then activate it
 PYTHON = python
-VIRTUALENV = venv
 # how many dinuc-shuffled scans to run; specify in the environment to override
 BGSCANS = 3
+# where to 'make install' to
+# see also 'MODULEDESTROOT', 'MODULEFILEDEST', and the 'module:' target, below
+PREFIX = /usr/local
+
 
 help:  # prints this help
 	@$(PYTHON) -c "$$AUTOGEN_HELP_PY" "$(firstword $(MAKEFILE_LIST))"
@@ -18,9 +21,15 @@ moods: have-cloned-moods-submodule moods-python # build MOODS 1.0.2.1 Python mod
 # define (and export) CLEAN=1 in the environment or pass it on the `make`
 # command line to *not* ask to clean up test results; instead, just do it
 export CLEAN
-test: cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite
-	@for f in $^; do \
-		echo "$(INFO) Testing $$f vs. examples/output/$$f…" >&2; \
+test: deps cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite
+	@echo
+	# testing COSMO outputs to examples/output/*
+	@for f in $(filter-out deps,$^); do \
+		if [[ ! -s $$f ]]; then \
+			echo -e "\n$(ERROR) $$f is empty! Try 'make reallyclean' to start over.\n" >&2; \
+			exit 1; \
+		fi; \
+		echo -e "$(INFO) $$f vs. examples/output/$$f…" >&2; \
 		( set -o pipefail; diff $$f examples/output/$$f | head ); \
 		if (( $$? != 0 )); then \
 			echo "$(WARN) $$f verification test failed." >&2; \
@@ -50,7 +59,7 @@ bgscans = $(shell echo cosmo.counts.tab.{1..$(BGSCANS)})
 stats.tab: cosmo.counts.tab $(bgscans)
 	./cosmostats.py > $@
 	@if [[ ! -s $@ ]]; then \
-		echo "$(ERROR) Output file '$@' was empty. Can't continue." >&2; \
+		echo -e "\n$(ERROR) Output file '$@' was empty. Can't continue.\n" >&2; \
 		rm $@; \
 		exit 1; \
 	fi
@@ -76,15 +85,22 @@ have-cloned-moods-submodule:
 # locate a Python library
 pywhich = $(PYTHON) -c 'm = __import__("$(1)", globals(), locals(), [], 0); print m.__file__'
 
-moods-python: have-python-27 have-pip have-python-venv moods-lib
+# install moods into the default location, probably the active virtualenv
+moods-python: have-python-27 have-pip moods-lib
 	@echo
-	@if ! $(call pywhich,MOODS) 2>&1 | grep -q $(VIRTUALENV) &>/dev/null; then \
-		echo "$(BLD)Building MOODS Python module...$(RST)" >&2; \
-		: get NumPy and SciPy if needed; \
-		$(PYTHON) -m pip install -r requirements.txt || exit 1; \
+	# checking for MOODS Python module…
+	@if ! $(call pywhich,MOODS) 2>&1 | grep MOODS; then \
+		echo -e "\n# $(BLD)Building MOODS Python module...$(RST)" >&2; \
 		: very old versions of 'pip' might fail here; \
 		cd MOODS/python && $(PYTHON) setup.py install || exit 1; \
-		echo; \
+	fi
+
+deps: moods-python
+	@echo
+	# checking for COSMO's dependencies
+	@if ! $(call pywhich,numpy) 2>&1 | grep numpy; then \
+		echo -e "\n# $(BLD)Installing dependencies$(RST)" >&2; \
+		$(PYTHON) -m pip install -r requirements.txt || exit 1; \
 	fi
 
 pyver := $(shell $(PYTHON) -c 'import sys; print("%d.%d.%d" % (sys.version_info.major, sys.version_info.minor, sys.version_info.micro))')
@@ -95,15 +111,7 @@ have-python-27:
 	@if [[ "$(pyver)" == 2.7.* ]]; then \
 		echo "$(INFO) Found Python v$(pyver)" >&2; \
 	else \
-		echo >&2; \
-		echo "$(ERROR) Python interpreter missing or not required version 2.7.x." >&2; \
-		echo >&2; \
-		echo "Create and activate a virtualenv with your system's Python 2.7, e.g.:" >&2; \
-		echo >&2; \
-		echo "    python2 -m virtualenv venv" >&2; \
-		echo >&2; \
-		echo "then run this make target again." >&2; \
-		echo >&2; \
+		echo -e "\n$(ERROR) Python interpreter missing or not required version 2.7.x.\n" >&2; \
 		exit 1; \
 	fi
 
@@ -111,29 +119,78 @@ have-pip:
 	@echo
 	# $(BLD)Checking for pip...$(RST)
 	@if ! $(PYTHON) -c 'import pip'; then \
-		echo "$(ERROR): No pip found for the current Python interpreter." >&2; \
+		echo -e "\n$(ERROR): No pip found for the current Python interpreter." >&2; \
+		echo -e "         Maybe you need to create/activate a virtualenv? See the README.\n" >&2; \
 		exit 1; \
 	fi
 
-have-python-venv:
-	@echo
-	# $(BLD)Checking for Python virtualenv (or creating one)...$(RST)
-	@if [[ ! -d $(VIRTUALENV) ]]; then \
-		$(PYTHON) -m virtualenv $(VIRTUALENV); \
-	fi
-	@if ! which $(PYTHON) | grep -q $(VIRTUALENV)/bin/$(PYTHON) &>/dev/null; then \
-		echo "$(NOTE) Please run `. $(VIRTUALENV)/bin/activate` first, then try again." >&2; \
-	fi
-
-moods-lib:
+moods-lib: MOODS/src/libpssm.a
+MOODS/src/libpssm.a:
 	@echo
 	# $(BLD)Building MOODS C library...$(RST)
 	cd MOODS/src && make
 
-logdir:
+install: have-python-27 moods-lib  # install MOODS and COSMO to /usr/local [override with PREFIX=]
 	@echo
-	# $(BOLD)making sure the log directory exists$(RST)
-	test -d $(LOGDIR) || mkdir -p $(LOGDIR)
+	# installing the MOODS library
+	cd MOODS/python && $(PYTHON) setup.py install --prefix="$(PREFIX)"
+	
+	@# for some reason, PYTHONPATH has to be defined here, but not for MOODS
+	@# I think it's because COSMO installs scripts/entrypoints? ¯\_(ツ)_/¯
+	# installing COSMO itself
+	PYTHONPATH="$(PREFIX)/lib/python2.7/site-packages" python setup.py install --prefix="$(PREFIX)"
+
+	# symlink 'cosmo' to 'cosmo.py' and likewise for 'cosmostats.py'
+	cd $(PREFIX)/bin && \
+	ln -sf cosmo.py cosmo && \
+	ln -sf cosmostats.py cosmostats
+	
+	# copying example PWMs
+	mkdir -p $(PREFIX)/lib/cosmo
+	cp -r examples/jpwm $(PREFIX)/lib/cosmo
+
+# where to install COSMO as a module, and where to put the modulefile
+MODULEDESTROOT = $(if $(LABLOCALMODULES),$(LABLOCALMODULES),$(PREFIX)/modules)
+MODULEFILEDEST = $(MODULEDESTROOT)/modulefiles/cosmo
+# update this as appropriate for your local setup
+MODULEPYTHON27MOD = python/2.7.18-wrl
+MODULEVERSION = $(VERSION)
+MODULEHOMEPAGE = $(HOMEPAGE)
+# set to an empty string to *not* ask to set the new modulefile as the default
+ASKDEFAULTMODULEVER = 1
+
+module: modulefile  # install COSMO as an Environment Modules module
+	@# dummy check, because I would tend to do this…
+	@if which $(PYTHON) 2>/dev/null | grep -qE 'v?env/bin'; then \
+		echo -e "\nYou should deactivate the virtualenv before running this step:" >&2; \
+		echo -e "\n    $$ deactivate" >&2; \
+		echo -e "\nThen try running 'make $@' again." >&2; \
+		exit 1; \
+	fi
+	@echo
+	# installing the COSMO modulefile
+	install -m644 modulefile/modulefile.tcl $(MODULEFILEDEST)/$(VERSION)
+
+ifneq ($(ASKDEFAULTMODULEVER),)
+	@read -p $$'\nSet version $(VERSION) as the new default module? [y/N] '; \
+	if [[ $$REPLY =~ ^[Yy] ]]; then \
+		install -m644 modulefile/dot-version.tcl $(MODULEFILEDEST)/.version; \
+		echo; \
+	fi
+endif
+
+	@# installing MOODS and COSMO
+	mkdir -p $(MODULEDESTROOT)/cosmo/$(VERSION)
+	make install PREFIX=$(MODULEDESTROOT)/cosmo/$(VERSION)
+
+# note that this will catch a few of Environment Modules *own* variables, too…
+M4DEFS = $(foreach V,$(filter MODULE%,$(.VARIABLES)),-D $V='$($V)')
+modulefile: modulefile/modulefile.tcl modulefile/dot-version.tcl  # update the Environment Modules modulefile
+modulefile/%: modulefile/%.m4
+	@echo
+	# generating the COSMO Environment Modules modulefile
+	m4 -P $(M4DEFS) $< > $@
+
 
 clean: # remove build/runtime detritus + logs
 	-rm *.pyc

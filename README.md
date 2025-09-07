@@ -8,7 +8,6 @@ data.
 
 * Python 2.7.x, with the following packages installed:
   * pip
-  * virtualenv
   * numpy and scipy (accounted for by the instructions below)
   * [MOODS v1.0.2.1][moods] (ditto)
 * JASPAR-formatted motifs
@@ -18,9 +17,9 @@ MOODS 1.9.x and Python 3 are not currently supported due to breaking changes
 in the MOODS programming interface.
 
 If you have multiple Python versions on your system, please ensure that the
-first `python`, `pip`, and `virtualenv` in your [search path][path] are the
-Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
-[Environment Modules][modules]) should handle this for you.
+first `python` and `pip` in your [search path][path] are the Python 2.7
+versions. In a typical HPC environment, your module system (_e.g._ [Environment
+Modules][modules]) should handle this for you.
 
 
 ## QUICK START
@@ -50,45 +49,53 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
         # if you don't already have a 'pip' for Python 2.7.x
         wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
         python get-pip.py
-        pip install -r requirements.txt
 
    If you have some other Python 2.7 environment (such as Conda or Environment
    Modules), you probably know what to do on your own. If you have trouble with
    this step, try the Docker method described [below](#development-and-testing).
 
-1. Next, build the MOODS C library and install the Python module into the
-   virtualenv:
+1. Next, build the MOODS C library and install the Python module dependencies
+   into the virtualenv:
 
         # in the 'cosmo' subdirectory from 'git clone' above
-        make moods
+        make deps
 
 1. Finally, to make sure everything works, you run the `make test` target in
    the included [`Makefile`](Makefile) (assumes a Unix environment):
 
         make test -j4  # run parallel tasks on up to 4 CPU cores
 
-See [DETAILED INSTALLATION](#detailed-installation) below if you're on Windows,
-or if you have any problems with the instructions above or the running the
-scripts.
-
+See [DETAILED INSTALLATION](#detailed-installation) below if you have any
+problems with the instructions above or the running the scripts.
 
 ### Local installation
 
-Provided you've run the `make moods` target as prescribed above, you can
-install `cosmo.py` and `cosmostats.py` as `cosmo` and `cosmostats`,
-respectively, making them available in your shell's [search path][path]:
+If you have MOODS and [COSMO's dependencies](requirements.txt) already
+installed, you can just copy `cosmo.py` and `cosmostats.py` to a directory in
+your shell's [search path][path] and call it good. However there's an `install`
+target in the included [Makefile](Makefile) that will handle the details for
+you.
 
-    # use either of these if you create a virtualenv as directed above
-    python setup.py install
-    pip install .
+If you are on a Unix/Linux system, run `make install`. The default installation
+prefix is `/usr/local` (with scripts being installed to `/usr/local/bin`), so
+you will likely need to become root with `sudo` or similar.
 
-    # try either of these if the above yields an error about permissions
-    python setup.py install --user
-    pip install --user .
+A simpler option is to install to your home directory:
 
-If if this is succesful, you can run `cosmo` or `cosmostats` from any directory
+    make install PREFIX=$HOME/.local
+
+Most Linux distributions already include `~/.local/bin` in your search path by
+default. You may need to log out and back in again for this to take effect. How
+to update your shell's `PATH` variable is beyond the scope here.
+
+If this is succesful, you can run `cosmo` or `cosmostats` from any directory
 on your filesystem, without needing to specify the relative pathnames like
 `./cosmo.py` in the examples below.
+
+Windows is not currently supported by [the method we presently use in our
+`setup.py`][scripts]. However, if you have success building MOODS on Windows
+and would like to have a go at getting COSMO working, too, a patch or pull
+request would be welcome.
 
 
 ## USAGE
@@ -261,6 +268,45 @@ The output `stats.tab` is tab-delimited, and may be viewed in the terminal,
 _e.g._, with `column -t`, or opened in a spreadsheet program such as Excel,
 Google Sheets, or LibreOffice.
 
+### Defining a system-wide path to the PWM files
+
+If you define an [environment variable][envvar] named `COSMO_PWMDIR`, it
+becomes the default for the `-p` / `--pwmdir` option. Typically, this would be
+an absolute path starting at `/`, but you can get creative.
+
+This can be useful, for example, when used with [Environment Modules][modules],
+to define a system-wide directory containing the JASPAR matrices for all users.
+
+This variable can also be defined in your login scripts, _e.g._ your
+`~/.bash_profile` or `~/.profile`; note that the variable set by a `setenv`
+statment in a [modulefile][] would still take precendence in that case.
+
+### Creating an Environment Modules / Lmod module
+
+The short answer is:
+
+    make module
+    
+For members of the Weirauch Lab, this will just do the Right Thing™.
+
+For others, this will install the module to `/usr/local/modules/cosmo/x.y.z`
+(where `x.y.z` is the currently checked-out version of COSMO) and put the
+modulefile in `/usr/local/modules/modulefiles/cosmo/x.y.z`.
+
+For you to be able to `module load cosmo`, you will need to have run `module
+use /usr/local/modules/modulefiles` in your current shell session or login
+scripts, or to have added that to your sitewide configuration files, _e.g._
+`/etc/environment-modules/modulespath` on Debian/Ubuntu systems.
+
+See the definitions of `MODULEDESTROOT` and `MODULEFILEDEST` in [the
+Makefile](Makefile) for customization options. For example, if you have custom
+modules in `~/modules` and modulefiles in `~/modules/modulefiles`, you can:
+
+    make module MODULEDESTROOT=$HOME/modules
+
+Further help with Environment Modules is beyond the scope of this document. See
+its homepage at https://modules.sf.net for more information.
+
 
 ## DEVELOPMENT AND TESTING
 
@@ -322,6 +368,7 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [`LICENSE.txt`](LICENSE.txt) for details.
 
 [path]: https://en.wikipedia.org/wiki/PATH_(variable)
+[scripts]: https://packaging.python.org/en/latest/guides/distributing-packages-using-setuptools/#scripts
 [moods]: https://www.cs.helsinki.fi/group/pssmfind/
 [bedtools]: http://bedtools.readthedocs.io/en/latest/
 [virtualenv]: https://virtualenv.pypa.io/en/latest/user_guide.html
@@ -334,4 +381,6 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [ke]: kevin.ernst@cchmc.org
 [mw]: matthew.weirauch@cchmc.org
 [moodscopy]: https://github.com/jhkorhonen/MOODS/blob/master/COPYING.GPLv3
+[envvar]: https://en.wikipedia.org/wiki/Environment_variable
+[modulefile]: https://modules.sourceforge.net/c/modulefile.html
 [semver.org]: https://semver.org

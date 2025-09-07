@@ -23,7 +23,7 @@ import MOODS
 
 DEFAULT_PSEUDO = 1
 DEFAULT_THRESHOLD = 0.60
-DEFAULT_PWMDIR = 'jpwm'
+DEFAULT_PWMDIR = os.getenv('COSMO_PWMDIR') if os.getenv('COSMO_PWMDIR') else 'jpwm'
 DEFAULT_NUMBER = 1
 DEFAULT_DISTANCE = 10
 
@@ -37,7 +37,7 @@ parser.add_argument('-t', '--threshold', type=float, default=DEFAULT_THRESHOLD,
 parser.add_argument('-s', '--scramflag', '--shuffle', action='store_true',
                     help='use shuffled input sequence')
 parser.add_argument('-p', '--pwmdir', default=DEFAULT_PWMDIR,
-                    help='PWMs to use')
+                    help='PWMs to use (default: %s)' % DEFAULT_PWMDIR)
 parser.add_argument('-N', '--number', type=int,
                     help="shuffle run number (use with '-s')")
 parser.add_argument('-C', '--coord', action='store_true',
