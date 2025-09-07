@@ -2,6 +2,9 @@
 ##
 ##  cosmo modulefile
 ##
+##  NOTE: This is a generated file! If you're not editing the '.m4' version,
+##        your changes are likely to get clobbered by a later 'make module'.
+##
 
 set name "cosmo"
 set version "MODULEVERSION"
@@ -11,7 +14,7 @@ set homepage "MODULEHOMEPAGE"
 set helppage "https://tfwiki.cchmc.org/wiki/COSMO"
 set installpage "https://tfwiki.cchmc.org/wiki/COSMO/Creating_a_%27cosmo%27_module"
 set bugspage "MODULEHOMEPAGE/issues"
-set topdir  "/data/weirauchlab/modules/local/cosmo/$version"
+set topdir  "MODULEDESTROOT/cosmo/$version"
 
 proc ModulesHelp { } {
     global proper
