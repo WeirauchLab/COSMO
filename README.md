@@ -290,7 +290,9 @@ The short answer is:
 
     make module
     
-For members of the Weirauch Lab, this will just do the Right Thing™.
+For members of the Weirauch Lab, this will just do the Right Thing™. To avoid
+errors here, purge all your modules, deactivate any virtualenvs, and re-load
+`python/2.7.18-wrl` or a comparable Python 2.7.x  module.
 
 For others, this will install the module to `/usr/local/modules/cosmo/x.y.z`
 (where `x.y.z` is the currently checked-out version of COSMO) and put the
