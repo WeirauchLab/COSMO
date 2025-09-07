@@ -112,6 +112,8 @@ The [`cosmo.py`](cosmo.py) script does the actual scanning of the FASTA, and
 [`cosmostats.py`](cosmostats.py) compiles summary statistics into a file
 named `stats.tab` in your current working directory.
 
+`cosmo.py` supports the following command-line options:
+
 | Option     | Description
 |------------|------------------------------------------------------------
 | `-fa PATH` | path to FASTA sequence file
@@ -133,12 +135,9 @@ the `-C` option, explained below) are saved into a [BED][]-formatted file
 
 ### Foreground scan
 
-`cosmo.py` supports the following command-line options:
+Example: scan a FASTA file in the current working directory, with a specific
+log-odds threshold score and maximum allowed distance between motifs:
 
-Example:
-
-    # scan a .fa file in the current working directory, with a specific
-    # log-odds threshold score and max. allowed distance between motifs
     # (the defaults are 0.6 and 10, respectively)
     ./cosmo.py -fa h3k27ac.fa -t 0.75 -d 20
 
