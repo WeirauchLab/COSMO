@@ -97,7 +97,7 @@ Most Linux distributions already include `~/.local/bin` in your search path by
 default. You may need to log out and back in again for this to take effect. How
 to update your shell's `PATH` variable is beyond the scope here.
 
-If this is succesful, you can run `cosmo` or `cosmostats` from any directory
+If this is successful, you can run `cosmo` or `cosmostats` from any directory
 on your filesystem, without needing to specify the relative pathnames like
 `./cosmo.py` in the examples below.
 
@@ -288,7 +288,7 @@ to define a system-wide directory containing the JASPAR matrices for all users.
 
 This variable can also be defined in your login scripts, _e.g._ your
 `~/.bash_profile` or `~/.profile`; note that the variable set by a `setenv`
-statment in a [modulefile][] would still take precendence in that case.
+statement in a [modulefile][] would still take precedence in that case.
 
 ### Creating an Environment Modules / Lmod module
 
