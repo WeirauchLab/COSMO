@@ -8,7 +8,6 @@ data.
 
 * Python 2.7.x, with the following packages installed:
   * pip
-  * virtualenv
   * numpy and scipy (accounted for by the instructions below)
   * [MOODS v1.0.2.1][moods] (ditto)
 * JASPAR-formatted motifs
@@ -18,9 +17,9 @@ MOODS 1.9.x and Python 3 are not currently supported due to breaking changes
 in the MOODS programming interface.
 
 If you have multiple Python versions on your system, please ensure that the
-first `python`, `pip`, and `virtualenv` in your [search path][path] are the
-Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
-[Environment Modules][modules]) should handle this for you.
+first `python` and `pip` in your [search path][path] are the Python 2.7
+versions. In a typical HPC environment, your module system (_e.g._ [Environment
+Modules][modules]) should handle this for you.
 
 
 ## QUICK START
@@ -51,17 +50,16 @@ Python 2.7 versions. In a typical HPC environment, your module system (_e.g._
         # if you don't already have a 'pip' for Python 2.7.x
         wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
         python get-pip.py
-        pip install -r requirements.txt
 
    If you have some other Python 2.7 environment (such as Conda or Environment
    Modules), you probably know what to do on your own. If you have trouble with
    this step, try the Docker method described [below](#development-and-testing).
 
-1. Next, build the MOODS C library and install the Python module into the
-   virtualenv:
+1. Next, build the MOODS C library and install the Python module dependencies
+   into the virtualenv:
 
         # in the 'cosmo' subdirectory from 'git clone' above
-        make moods
+        make deps
 
 1. Finally, to make sure everything works, you run the `make test` target in
    the included [`Makefile`](Makefile) (assumes a Unix environment):
