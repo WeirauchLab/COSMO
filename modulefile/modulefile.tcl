@@ -2,15 +2,18 @@
 ##
 ##  cosmo modulefile
 ##
+##  NOTE: This is a generated file! If you're not editing the '.m4' version,
+##        your changes are likely to get clobbered by a later 'make module'.
+##
 
 set name "cosmo"
-set version "1.1.2"
+set version "1.1.3"
 set proper "COSMO"
 set descrip "Detects enriched composite motifs in genomic sequence data"
-set homepage "https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo"
+set homepage "https://github.com/weirauchlab/cosmo"
 set helppage "https://tfwiki.cchmc.org/wiki/COSMO"
 set installpage "https://tfwiki.cchmc.org/wiki/COSMO/Creating_a_%27cosmo%27_module"
-set bugspage "https://tfinternal.research.cchmc.org/gitlab/weirauchlab/cosmo/issues"
+set bugspage "https://github.com/weirauchlab/cosmo/issues"
 set topdir  "/data/weirauchlab/modules/local/cosmo/$version"
 
 proc ModulesHelp { } {
