@@ -1,5 +1,4 @@
 FROM debian:stable-slim
-SHELL ["/bin/bash", "-c"]
 ARG PYVER=2.7.18
 # probably doubles the build time, but if you want it set to '1'
 ARG PYOPTIMIZED=
@@ -14,13 +13,14 @@ RUN apt-get install -y --no-install-recommends make less vim-tiny
 WORKDIR /usr/src
 RUN wget --no-verbose https://www.python.org/ftp/python/$PYVER/Python-$PYVER.tgz
 # source: https://www.python.org/downloads/release/python-2718
-RUN md5sum -c <(echo "38c84292658ed4456157195f1c9bcbe1  Python-$PYVER.tgz")
+RUN echo "38c84292658ed4456157195f1c9bcbe1  Python-$PYVER.tgz" > MD5SUMS
+RUN md5sum -c MD5SUMS && rm MD5SUMS
 RUN tar xzf Python*
 
 WORKDIR Python-$PYVER
 # `--enable-optimizations` here runs a lot of tests, and we don't really care
 # h/t: https://stackoverflow.com/a/44800991
-RUN ./configure $( (( PYOPTIMIZED)) && echo --enable-optimizations )
+RUN if [ $PYOPTIMIZED -eq 1 ]; then ./configure --enable-optimizations; else ./configure; fi
 RUN make -j8 && make install
 
 # source: https://pip.pypa.io/en/stable/installation (more or less)

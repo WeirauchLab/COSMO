@@ -72,6 +72,8 @@ cosmo.counts.tab.%: $(EXAMPLEFASTA)
 
 examples/example%.fa:
 	gunzip -dc $@.gz > $@
+examples/example.fa:
+	gunzip -dc $@.gz > $@
 
 have-cloned-moods-submodule:
 	@echo

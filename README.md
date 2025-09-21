@@ -7,14 +7,14 @@ data.
 ## PREREQUISITES
 
 * Python 2.7.x, with the following packages installed:
-  * pip
-  * numpy and scipy (accounted for by the instructions below)
-  * [MOODS v1.0.2.1][moods] (ditto)
+    * pip
+    * numpy and scipy (accounted for by the instructions below)
+    * [MOODS v1.0.2.1][moods] (ditto)
 * JASPAR-formatted motifs
 * [bedtools][]-derived FASTA DNA sequence file(s)
 
-MOODS 1.9.x and Python 3 are not currently supported due to breaking changes
-in the MOODS programming interface.
+Newer versions of MOODS and Python are not supported. PRs to add this support,
+which pass the [included tests](#development-and-testing), would be welcome.
 
 If you have multiple Python versions on your system, please ensure that the
 first `python` and `pip` in your [search path][path] are the Python 2.7
@@ -26,24 +26,28 @@ Modules][modules]) should handle this for you.
 
 1. Clone the source from GitLab (MOODS v1.0.2.1 is provided as a submodule):
 
-        git clone --recursive https://github.com/weirauchlab/cosmo/cosmo.git
+        git clone --recursive https://github.com/weirauchlab/cosmo.git
         cd cosmo
 
-    * as an alternative, download the [latest release archive][zip]
-      from GitHub, then unpack it into a local directory; see the
-      [DETAILED INSTALLATION](#detailed-installation) section for instructions
-      on downloading and building MOODS from source
+    If you already cloned the repository without reading this section first, no
+    worries, just run this inside the new clone:
 
-2. If you have Docker:
+        git submodule init && git submodule update
+
+    As an alternative, download the [latest release archive][zip] from GitHub,
+    then unpack it into a local directory; see the [DETAILED
+    INSTALLATION](#detailed-installation) section for instructions on
+    downloading and building MOODS from source
+
+2. If you have [Docker][] or [Podman][] available (substitute `podman` for
+   `docker` below):
 
         docker build . -t cosmo  # be patient, builds Python 2.7 from source!
         docker run --rm -it cosmo cosmo --help
         docker run --rm -it cosmo cosmostats --help
-        docker run --rm -it -v .:/src cosmo make -j4 test
 
-    This method requires the least amount of work on _your_ part, but it's the
-    least tested. Use a bind mount (`-v` switch) if you want access to the
-    sample data from the repository to run `make test` inside the container.
+    See the [DEVELOPMENT AND TESTING](#development-and-testing) section for
+    more details.
 
 3. If you want to use a local Python installation instead, make sure you have a
    version of `pip` that works with Python 2.7:
@@ -193,6 +197,9 @@ Did you forget to `git clone --recursive`? If you didn't do that, you don't
 have the MOODS submodule. Do this:
 
     cd cosmo  # if not already there
+
+    # if required, create a Python 2.7 virtualenv and activate it
+    python -m virtualenv venv && source venv/bin/activate
     
     if test -d .git; then
         git submodule init && git submodule update
@@ -201,13 +208,12 @@ have the MOODS submodule. Do this:
         echo "Oops, this isn't a Git repository." >&2
     fi
 
-When you are reminded, run `source venv/bin/activate` to switch on the Python
-virtual environment; this is how COSMO finds MOODS.
+If your Python is in a virtual environment, **make sure it is activated**,
+otherwise the `make moods` step will not do the right thing.
 
 At this point, you should be able to run `./cosmo.py` and get a usage
-message (but no Python tracebacks).
-
-Skip to "[Running on example FASTA](#running-on-example-fasta)."
+message (with no Python tracebacks). Skip to "[Running on example
+FASTA](#running-on-example-fasta)."
 
 ### If you don't have Git and downloaded the .zip or tarball
 
@@ -223,9 +229,10 @@ You will need to download the MOODS sources from GitHub first:
     # move the unpacked directory to 'MOODS', where the Makefile expects it
     mv MOODS-1.0.2.1 MOODS
 
-You should be able to `make moods` at this point, and the Makefile will guide
-you through the rest of the steps. But here's the completely manual way to
-reproduce what the Makefile does:
+Again, if your Python is in a virtual environment, **make sure it is
+activated**.  You should be able to `make moods` at this point, and the
+Makefile will guide you through the rest of the steps. But here's the
+completely manual way to reproduce what the Makefile does:
 
     pushd MOODS/src
     make
@@ -243,28 +250,28 @@ reproduce what the Makefile does:
     export PYTHONPATH=$moodspath${PYTHONPATH:+:$PYTHONPATH}
 
 At this point, you should be able to run `./cosmo.py` and get a usage
-message (but no Python tracebacks).
+message (with no Python tracebacks).
 
 ### Running on example FASTA
 
 First, unpack the example FASTA file if necessary, and run several background
-scans (in this example, three), specifying the `-C` (save coordinates) option
-with the last one:
+scans (in this example, three):
 
     cd examples
     test -f example.fa || gunzip example.fa.gz
 
     # vary these parameters to your liking (see USAGE section, above)
-    defaultargs="-fa example.fa -t 0.6 -d 10 -p jpwm"
+    args="-fa example.fa -t 0.6 -d 10 -p jpwm"
 
-    ../cosmo.py $defaultargs &>1.log &
-    ../cosmo.py $defaultargs &>2.log &
-    ../cosmo.py $defaultargs -C &>3.log &
+    # the '&>' syntax assumes Bash or Z shell; it combines stdout and stderr
+    ../cosmo.py $args -s -N 1 &>1.log &
+    ../cosmo.py $args -s -N 2 &>2.log &
+    ../cosmo.py $args -s -N 3 &>2.log &
 
-Wait for all the background jobs to finish, then run a coordinates scan, using
-the results from the three background scans (`-N 3`):
+Run an additional scan with the `-C` (save coordinates) option, so you can see
+what that output looks like:
 
-    ../cosmo.py $defaultargs -s -N 3
+    ../cosmo.py $args -C &>coords.log &
 
 Finally, compute statistics for the three scans (`-N 3`) and redirect this
 output into a file named `stats.tab`:
@@ -282,7 +289,8 @@ becomes the default for the `-p` / `--pwmdir` option. Typically, this would be
 an absolute path starting at `/`, but you can get creative.
 
 This can be useful, for example, when used with [Environment Modules][modules],
-to define a system-wide directory containing the JASPAR matrices for all users.
+to define a system-wide directory containing the JASPAR-fromatted matrices for
+all users.
 
 This variable can also be defined in your login scripts, _e.g._ your
 `~/.bash_profile` or `~/.profile`; note that the variable set by a `setenv`
@@ -332,8 +340,18 @@ inside the container before running commands inside it. For example:
     docker run --rm -it cosmo cosmo --help
     docker run --rm -it cosmo cosmostats --help
 
-    # run tests on sample data included with repository, on 4 CPU cores
+[Podman][] will work equally well here. To run tests on sample data included
+with repository, on 4 CPU cores:
+
     docker run --rm -it -v .:/src cosmo make -j4 test
+
+    # or with Podman, assuming your local user ID is 1000
+    podman run --userns=keep-id --rm -it -v .:/src cosmo make -j4 test
+
+Podman runs containers without root privileges, with the container's `cosmo`
+user in a different namespace than the user on the host system, so you need to
+add `--userns=keep-id` to the `docker run` invocation, or else manually adjust
+permissions inside the container.[^fn2]
 
 If you're changing the code, make sure `make test` passes, or at least you can
 figure out the reason _why_ it didn't pass (explain this in your commit
@@ -382,6 +400,8 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [path]: https://en.wikipedia.org/wiki/PATH_(variable)
 [modules]: http://modules.sourceforge.net/
 [zip]: https://github.com/WeirauchLab/cosmo/archive/refs/heads/github.zip
+[docker]: https://en.wikipedia.org/wiki/Docker_(software)
+[podman]: https://en.wikipedia.org/wiki/Podman
 [bed]: https://genome.ucsc.edu/FAQ/FAQformat.html#format1
 [pip]: https://pip.pypa.io/en/stable/installing/
 [jr]: mailto:riddeljr@mail.uc.edu
@@ -391,3 +411,6 @@ The software's license is GPLv3, to match [that of MOODS][moodscopy]. See
 [envvar]: https://en.wikipedia.org/wiki/Environment_variable
 [modulefile]: https://modules.sourceforge.net/c/modulefile.html
 [semver.org]: https://semver.org
+
+[^fn1]: In Podman or "rootless" Docker, this will probably not work for you unless your user ID is 1000 (that of the `cosmo` user inside the container).  The solution is left as an exercise for the reader.
+[^fn2]: Helpful background information may be found in [these](https://www.redhat.com/en/blog/user-namespaces-selinux-rootless-containers) [two](https://www.redhat.com/en/blog/user-flag-rootless-containers) Red Hat blog posts.
