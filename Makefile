@@ -11,37 +11,59 @@ BGSCANS = 3
 # where to 'make install' to
 # see also 'MODULEDESTROOT', 'MODULEFILEDEST', and the 'module:' target, below
 PREFIX = /usr/local
+# ANSI terminal colors (see 'man tput').
+# Don't set these if there isn't a $TERM environment variable
+# source: https://linuxtidbits.wordpress.com/2008/08/11/output-color-on-bash-scripts/
+ifneq ($(strip $(TERM)),)
+	BLD := $(shell tput bold)
+	UL  := $(shell tput sgr 0 1)
+	RED := $(shell tput setaf 1)
+	GRN := $(shell tput setaf 2)
+	YEL := $(shell tput setaf 3)
+	BLU := $(shell tput setaf 4)
+	MAG := $(shell tput setaf 5)
+	CYA := $(shell tput setaf 6)
+	RST := $(shell tput sgr0)
+	ERR := $(BLD)$(RED)
+	WRN := $(BLD)$(YEL)
+	OK := $(BLD)$(GRN)
+endif
+ERROR := [$(ERR)ERROR$(RST)]
+WARN := [$(WRN)WARNING$(RST)]
+HINT := [$(MAG)$(BLD)HINT$(RST)]
+NOTE := [$(WRN)NOTE$(RST)]
+INFO := [$(CYA)INFO$(RST)]
 
 
 help:  # print this help
 	@$(PYTHON) -c "$$AUTOGEN_HELP_PY" "$(firstword $(MAKEFILE_LIST))"
-
-moods: have-cloned-moods-submodule moods-python # build MOODS 1.0.2.1 Python module
 
 # define (and export) CLEAN=1 in the environment or pass it on the `make`
 # command line to *not* ask to clean up test results; instead, just do it
 export CLEAN
 test: cosmo.coords.bed cosmo.counts.tab stats.tab  # run a basic test suite on COSMO
 	@echo
-	# testing COSMO outputs to examples/output/*
-	@for f in $(filter-out deps,$^); do \
+	# $(BLD)Comparing COSMO outputs to known good in 'examples/output'…$(RST)
+	@for f in $^; do \
 		if [[ ! -s $$f ]]; then \
 			echo -e "\n$(ERROR) $$f is empty! Try 'make clean' to start over.\n" >&2; \
 			exit 1; \
 		fi; \
-		echo -e "$(INFO) $$f vs. examples/output/$$f…" >&2; \
+		echo -n "- $$f vs. examples/output/$$f… " >&2; \
 		( set -o pipefail; diff $$f examples/output/$$f | head ); \
-		if (( $$? != 0 )); then \
-			echo "$(WARN) $$f verification test failed." >&2; \
+		if (( $$? == 0 )); then \
+			echo "$(OK)OK$(RST)" >&2; \
+		else \
+			echo "$(ERR)FAIL$(RST)" >&2; \
 			failed=$$(( failed + 1 )); \
 		fi; \
 	done; \
 	if (( failed )); then exit 1; fi
 	
 	@if [[ -z $$CLEAN ]]; then \
-		read -p $$'\nClean results from test run now? [y/N] ' CLEAN; \
+		read -p $$'\nClean results from test run now? [Y/n] ' CLEAN; \
 	fi; \
-	if [[ $$CLEAN =~ ^[Yy] ]]; then \
+	if [[ -z $$CLEAN || $$CLEAN =~ ^[Yy] ]]; then \
 		make clean || exit 1; \
 	else \
 		echo -e "\nOK, preserving outputs from test run."; \
@@ -75,41 +97,58 @@ examples/example%.fa:
 examples/example.fa:
 	gunzip -dc $@.gz > $@
 
+
+# locate a Python library
+pywhich = $(shell $(PYTHON) -c 'm = __import__("$(1)", globals(), locals(), [], 0); print m.__file__' 2>/dev/null)
+# print the major.minor.patchlevel version of Python
+pyver := $(shell $(PYTHON) -c 'import sys; print("%d.%d.%d" % (sys.version_info.major, sys.version_info.minor, sys.version_info.micro))')
+# returns 0 if Python module $(1) can be loaded
+pyhavemod = $(PYTHON) -c 'import $(1)' 2>/dev/null
+pysyspath = $(shell $(PYTHON) -c 'import sys; print(sys.path)')
+
+deps: have-python-27 have-pip moods  # install COSMO and its dependencies
+	@echo
+	# $(BLD)Checking for COSMO's dependencies…$(RST)
+	@if $(call pyhavemod,numpy); then \
+		echo "$(INFO) Found numpy at '$(call pywhich,numpy)" >&2; \
+	else \
+		echo "$(INFO) No numpy module present in sys.path: $(call pysyspath)" >&2; \
+		echo -e "\n# $(BLD)Installing COSMO's dependencies…$(RST)" >&2; \
+		$(PYTHON) -m pip install -r requirements.txt || exit 1; \
+	fi
+
+moods: have-cloned-moods-submodule have-python-27 have-pip moods-lib  # build MOODS 1.x C library and install the Python library
+	@echo
+	# $(BLD)Checking for MOODS Python module…$(RST)
+	@if $(call pyhavemod,MOODS); then \
+		echo "$(INFO) Found MOODS at '$(call pywhich,MOODS)" >&2; \
+	else \
+		echo "$(INFO) No MOODS module present in sys.path: $(call pysyspath)" >&2; \
+		echo -e "\n# $(BLD)Building MOODS Python module…$(RST)" >&2; \
+		: very old versions of 'pip' might fail here; \
+		cd MOODS/python && $(PYTHON) setup.py install || exit 1; \
+	fi
+
 have-cloned-moods-submodule:
 	@echo
-	# $(BLD)checking if user did 'git clone --recursive'$(RST)
-	@if [[ ! -d MOODS/src ]]; then \
+	# $(BLD)checking if user did 'git clone --recursive'…$(RST)
+	@if [[ -d MOODS/src ]]; then \
+		echo "$(INFO) MOODS/src subdirectory exists" >&2; \
+	else \
 		echo "$(ERROR): MOODS submodule missing" >&2; \
 		echo "Please run 'git submodule init && git submodule update' and try again." >&2; \
 		exit 1; \
 	fi
 
-# locate a Python library
-pywhich = $(PYTHON) -c 'm = __import__("$(1)", globals(), locals(), [], 0); print m.__file__'
-
-# install moods into the default location, probably the active virtualenv
-moods-python: have-python-27 have-pip moods-lib
+moods-lib: MOODS/src/libpssm.a
+MOODS/src/libpssm.a:
 	@echo
-	# checking for MOODS Python module…
-	@if ! $(call pywhich,MOODS) 2>&1 | grep MOODS; then \
-		echo -e "\n# $(BLD)Building MOODS Python module...$(RST)" >&2; \
-		: very old versions of 'pip' might fail here; \
-		cd MOODS/python && $(PYTHON) setup.py install || exit 1; \
-	fi
-
-deps: moods-python
-	@echo
-	# checking for COSMO's dependencies
-	@if ! $(call pywhich,numpy) 2>&1 | grep numpy; then \
-		echo -e "\n# $(BLD)Installing dependencies$(RST)" >&2; \
-		$(PYTHON) -m pip install -r requirements.txt || exit 1; \
-	fi
-
-pyver := $(shell $(PYTHON) -c 'import sys; print("%d.%d.%d" % (sys.version_info.major, sys.version_info.minor, sys.version_info.micro))')
+	# $(BLD)Building MOODS C library…$(RST)
+	cd MOODS/src && make
 
 have-python-27:
 	@echo
-	# $(BLD)Checking for Python 2.7.x...$(RST)
+	# $(BLD)Checking for Python 2.7.x…$(RST)
 	@if [[ "$(pyver)" == 2.7.* ]]; then \
 		echo "$(INFO) Found Python v$(pyver)" >&2; \
 	else \
@@ -119,18 +158,14 @@ have-python-27:
 
 have-pip:
 	@echo
-	# $(BLD)Checking for pip...$(RST)
-	@if ! $(PYTHON) -c 'import pip'; then \
+	# $(BLD)Checking for pip…$(RST)
+	@if $(call pyhavemod,pip); then \
+		echo "$(INFO) Found pip at $(call pywhich,pip)" >&2; \
+	else \
 		echo -e "\n$(ERROR): No pip found for the current Python interpreter." >&2; \
 		echo -e "         Maybe you need to create/activate a virtualenv? See the README.\n" >&2; \
 		exit 1; \
 	fi
-
-moods-lib: MOODS/src/libpssm.a
-MOODS/src/libpssm.a:
-	@echo
-	# $(BLD)Building MOODS C library...$(RST)
-	cd MOODS/src && make
 
 install: have-python-27 moods-lib  # [install] install MOODS and COSMO to /usr/local [override with PREFIX=]
 	@echo
@@ -195,8 +230,8 @@ modulefile/%: modulefile/%.m4
 
 
 clean: # [clean] remove COSMO output data (*.bed, *.tab*, *.fa)
-	-rm *.bed *.tab*
-	-rm examples/*.bed examples/*.tab*
+	-rm *.bed *.tab* *.log
+	-rm examples/*.bed examples/*.tab* examples/*.log
 	-rm examples/example*.fa
 
 distclean: clean  # [clean] clean + remove intermediate build artifacts
@@ -217,29 +252,6 @@ envclean: # [clean] remove the virtualenv (assuming you named it 'venv')
 ##  internals you can safely ignore
 ##
 
-# ANSI terminal colors (see 'man tput').
-# Don't set these if there isn't a $TERM environment variable
-# source: https://linuxtidbits.wordpress.com/2008/08/11/output-color-on-bash-scripts/
-ifneq ($(strip $(TERM)),)
-	BLD := $(shell tput bold)
-	UL  := $(shell tput sgr 0 1)
-	RED := $(shell tput setaf 1)
-	GRN := $(shell tput setaf 2)
-	YEL := $(shell tput setaf 3)
-	BLU := $(shell tput setaf 4)
-	MAG := $(shell tput setaf 5)
-	CYA := $(shell tput setaf 6)
-	RST := $(shell tput sgr0)
-	ERR := $(BLD)$(RED)
-	WRN := $(BLD)$(YEL)
-	OK := $(BLD)$(GRN)
-endif
-
-ERROR := [$(ERR)ERROR$(RST)]
-WARN := [$(WRN)WARNING$(RST)]
-HINT := [$(MAG)$(BLD)HINT$(RST)]
-NOTE := [$(WRN)NOTE$(RST)]
-INFO := [$(CYA)INFO$(RST)]
 
 # automatically generate 'make help' given the name of the Makefile
 define AUTOGEN_HELP_PY

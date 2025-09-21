@@ -49,14 +49,22 @@ Modules][modules]) should handle this for you.
     See the [DEVELOPMENT AND TESTING](#development-and-testing) section for
     more details.
 
-3. If you want to use a local Python installation instead, make sure you have a
-   version of `pip` that works with Python 2.7:
+3. If you want to use a local Python installation instead, you'll probably need
+   to load a [module][modules], or build Python 2.7 from source. If you don't
+   already have a version of pip that works with Python 2.7, install it:
 
         wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
         python get-pip.py
 
-    Use pip to install [virtualenv][] if necessary, then create a Python 2.7
-    virtual environment and activate it:
+    > **Important tip:**<br>
+    > At this point, stop and make sure that `python --version` and `pip
+    > --version` both report "2.7" in their output; that is, that the first
+    > `python` and `pip` in your [search path][path] are _definitely_ the
+    > Python 2.7 versions.
+
+    To avoid having to install COSMO's dependencies at the system level, use
+    pip to install [virtualenv][] if necessary, then create a Python virtual
+    environment and activate it:
 
         # in the 'cosmo' subdirectory from 'git clone' above
         python -m virtualenv venv
@@ -66,11 +74,13 @@ Modules][modules]) should handle this for you.
     Modules), you probably know what to do on your own. If you have trouble with
     this step, try the Docker method described [below](#development-and-testing).
 
-4. Next, build the MOODS C library and install the Python module dependencies
-   into the virtualenv:
+4. Next, build the MOODS C library and install COSMO's other Python
+   dependencies:
 
-        # in the 'cosmo' subdirectory from 'git clone' above
         make deps
+
+    If you get a "permission denied" error here, follow the steps above to
+    create a virtualenv, activate it, then try again.
 
 5. Finally, to make sure everything works, you run the `make test` target in
    the included [`Makefile`](Makefile) (assumes a Unix environment):
@@ -203,13 +213,13 @@ have the MOODS submodule. Do this:
     
     if test -d .git; then
         git submodule init && git submodule update
-        make moods
+        make deps
     else
         echo "Oops, this isn't a Git repository." >&2
     fi
 
 If your Python is in a virtual environment, **make sure it is activated**,
-otherwise the `make moods` step will not do the right thing.
+otherwise the `make deps` step will not do the right thing.
 
 At this point, you should be able to run `./cosmo.py` and get a usage
 message (with no Python tracebacks). Skip to "[Running on example
@@ -230,24 +240,18 @@ You will need to download the MOODS sources from GitHub first:
     mv MOODS-1.0.2.1 MOODS
 
 Again, if your Python is in a virtual environment, **make sure it is
-activated**.  You should be able to `make moods` at this point, and the
+activated**.  You should be able to `make deps` at this point, and the
 Makefile will guide you through the rest of the steps. But here's the
 completely manual way to reproduce what the Makefile does:
 
     pushd MOODS/src
     make
     cd ../python
-    python setup.py build
+    python setup.py install
     popd
 
-    # install NumPy and SciPy (MOODS dependencies)
+    # install NumPy and SciPy (COSMO's dependencies)
     pip install -r requirements.txt
-
-    # add just-built MOODS library to the PYTHONPATH for this login session
-    pyplatform=$(python -c 'from distutils.util import get_platform
-    print(get_platform())')
-    moodspath=$PWD/MOODS/python/build/lib.$pyplatform
-    export PYTHONPATH=$moodspath${PYTHONPATH:+:$PYTHONPATH}
 
 At this point, you should be able to run `./cosmo.py` and get a usage
 message (with no Python tracebacks).
@@ -289,7 +293,7 @@ becomes the default for the `-p` / `--pwmdir` option. Typically, this would be
 an absolute path starting at `/`, but you can get creative.
 
 This can be useful, for example, when used with [Environment Modules][modules],
-to define a system-wide directory containing the JASPAR-fromatted matrices for
+to define a system-wide directory containing the JASPAR-formatted matrices for
 all users.
 
 This variable can also be defined in your login scripts, _e.g._ your
