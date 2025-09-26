@@ -1,5 +1,9 @@
 # COSMO - Composite Motif Scanner
 
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.17211441.svg)](https://doi.org/10.5281/zenodo.17211441)
+
+
 This script allows detection of enriched composite motifs in genomic sequence
 data.
 
